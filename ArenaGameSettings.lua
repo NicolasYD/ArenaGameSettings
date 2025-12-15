@@ -5,9 +5,6 @@ local ACD = LibStub("AceConfigDialog-3.0")
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 
--- Local variables to track state
-local lastInstanceType
-
 -- Table containing the CVars modified by this addon
 local cvarToKey = {
     Sound_MasterVolume = "MasterVolume",
@@ -22,7 +19,7 @@ local cvarToKey = {
 -- Minimap button
 local minimapDataObject = LDB:NewDataObject("ArenaGameSettings", {
     type = "launcher",
-    icon = "Interface\\Icons\\Ability_Warrior_BattleShout",
+    icon = "Interface\\Icons\\Achievement_Featsofstrength_Gladiator_10",
     OnClick = function(_, button)
         if button == "LeftButton" then
             ArenaGameSettings:OpenOptions()
@@ -40,26 +37,17 @@ function ArenaGameSettings:UpdateSettings()
     local settings = self.db.global
     local inInstance, instanceType = IsInInstance()
 
-    -- Only update CVars when the instance type changes
-    if instanceType ~= lastInstanceType then
-        lastInstanceType = instanceType
-
-        if instanceType == "arena" then
-            for cvar, key in pairs(cvarToKey) do
-                C_CVar.SetCVar(cvar, settings.arena[key] or tonumber(C_CVar.GetCVar(cvar)))
-            end
-
-        elseif instanceType ~= "arena" then
-            for cvar, key in pairs(cvarToKey) do
-                C_CVar.SetCVar(cvar, settings.outside[key] or tonumber(C_CVar.GetCVar(cvar)))
-            end
+    if instanceType == "arena" then
+        for cvar, key in pairs(cvarToKey) do
+            C_CVar.SetCVar(cvar, settings.arena[key] or tonumber(C_CVar.GetCVar(cvar)))
+        end
+    elseif instanceType ~= "arena" then
+        for cvar, key in pairs(cvarToKey) do
+            C_CVar.SetCVar(cvar, settings.outside[key] or tonumber(C_CVar.GetCVar(cvar)))
         end
     end
 
-    -- Always show framerate
-    if FramerateFrame and FramerateFrame.Show and not FramerateFrame:IsShown() then
-        FramerateFrame:Show()
-    end
+    self:ShowFramerate()
 end
 
 function ArenaGameSettings:SaveCurrentCVarsToDB()
@@ -70,6 +58,16 @@ function ArenaGameSettings:SaveCurrentCVarsToDB()
         for cvar, key in pairs(cvarToKey) do
             settings.outside[key] = tonumber(C_CVar.GetCVar(cvar))
         end
+    end
+end
+
+-- Display the framerate
+function ArenaGameSettings:ShowFramerate()
+    local showFR = self.db.global.showFramerate
+    if showFR and FramerateFrame and FramerateFrame.Show and not FramerateFrame:IsShown() then
+        FramerateFrame:Show()
+    elseif not showFR and FramerateFrame and FramerateFrame.Hide and FramerateFrame:IsShown() then
+        FramerateFrame:Hide()
     end
 end
 
@@ -120,7 +118,9 @@ function ArenaGameSettings:OnInitialize()
         global = {
             minimap = {
                 hide = false,
+                minimapPos = 15,
             },
+            showFramerate = true,
             arena = {
                 MusicVolume = 0.00,
                 SFXVolume = 1.00,
