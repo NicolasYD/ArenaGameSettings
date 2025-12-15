@@ -1,7 +1,8 @@
 -- Load libraries
-local ArenaGameSettings = LibStub("AceAddon-3.0"):NewAddon("ArenaGameSettings", "AceEvent-3.0")
+local ArenaGameSettings = LibStub("AceAddon-3.0"):NewAddon("ArenaGameSettings", "AceEvent-3.0", "AceConsole-3.0")
 local AC = LibStub("AceConfig-3.0")
 local ACD = LibStub("AceConfigDialog-3.0")
+local ACR = LibStub("AceConfigRegistry-3.0")
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 
@@ -123,6 +124,19 @@ function ArenaGameSettings:OpenOptions()
     end
 end
 
+-- Handle ingame slash commands
+function ArenaGameSettings:SlashCommand(input)
+    input = input:lower()
+
+    if input == "reset" then
+        self.db:ResetDB()
+        ACR:NotifyChange("ArenaGameSettings")
+        print("ArenaGameSettings: settings reset.")
+    else
+        self:OpenOptions()
+    end
+end
+
 -- Event handler when player enters the world or changes zones
 function ArenaGameSettings:PLAYER_ENTERING_WORLD()
     self:UpdateSettings()
@@ -149,9 +163,6 @@ function ArenaGameSettings:CVAR_UPDATE(event, cvar, value)
 end
 
 function ArenaGameSettings:OnInitialize()
-    -- Initialize internal state
-    lastInstanceType = nil
-
     -- Set up saved variables
     self.db = LibStub("AceDB-3.0"):New("ArenaGameSettingsDB", {
         global = {
@@ -176,6 +187,9 @@ function ArenaGameSettings:OnInitialize()
 
     -- Minimap button
     LDBIcon:Register("ArenaGameSettings", minimapDataObject, self.db.global.minimap)
+
+    -- Slash command
+    self:RegisterChatCommand("ags", "SlashCommand")
 end
 
 -- Register events
