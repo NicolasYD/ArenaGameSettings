@@ -161,29 +161,41 @@ function ArenaGameSettings:SetupOptions()
         type = "group",
         name = "ArenaGameSettings",
         args = {
-            header = {
-                type = "header",
-                name = "Arena Game Settings",
-                order = 1,
-            },
-            minimap = {
-                type = "toggle",
-                name = "Show Minimap Button",
-                get = function()
-                    return not self.db.global.minimap.hide
-                end,
-                set = function(_, value)
-                    self.db.global.minimap.hide = not value
-                    if value then
-                        LDBIcon:Show("ArenaGameSettings")
-                    else
-                        LDBIcon:Hide("ArenaGameSettings")
-                    end
-                end,
-                order = 2,
+            audio = {
+                type = "group",
+                name = "Audio",
+                childGroups = "tab",
+                args = {
+                    arena = {
+                        type = "group",
+                        name = "Arena",
+                        order = 1,
+                        args = {},
+                    },
+                    outside = {
+                        type = "group",
+                        name = "Outside",
+                        order = 2,
+                        args = {},
+                    },
+                },
             },
         },
     }
+    
+    for cvar, key in pairs(cvarToKey) do
+        options.args.audio.args.outside.args[key] = {
+            type = "range",
+            name = key,
+            min = 0, max = 1, step = 0.01,
+            get = function()
+                return tonumber(C_CVar.GetCVar(cvar))
+            end,
+            set = function(_, value)
+                C_CVar.SetCVar(cvar, value)
+            end,
+        }
+    end
 
     AC:RegisterOptionsTable("ArenaGameSettings", options)
     ACD:AddToBlizOptions("ArenaGameSettings", "ArenaGameSettings")
