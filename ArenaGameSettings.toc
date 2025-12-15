@@ -1,0 +1,12 @@
+## Interface: 110207
+## Title: Arena Game Settings
+## Notes: Changes game settings when inside arena
+## Author: Pharmac1st
+## Version: 11.02.07.1
+## Category: Interface
+## IconTexture: interface\icons\trade_engineering
+## SavedVariables: ArenaGameSettingsDB
+
+Embeds.xml
+
+ArenaGameSettings.lua

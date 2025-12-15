@@ -1,0 +1,114 @@
+-- Load Ace3 libraries
+local ArenaGameSettings = LibStub("AceAddon-3.0"):NewAddon("ArenaGameSettings", "AceEvent-3.0")
+
+-- Local variables to track state
+local lastInstanceType
+
+-- Table containing the CVars modified by this addon
+local cvarToKey = {
+    Sound_MasterVolume = "MasterVolume",
+    Sound_MusicVolume = "MusicVolume",
+    Sound_SFXVolume = "SFXVolume",
+    Sound_AmbienceVolume = "AmbienceVolume",
+    Sound_DialogVolume = "DialogVolume",
+    Sound_GameplaySFX = "GameplaySFX",
+    Sound_PingVolume = "PingVolume",
+}
+
+-- Function to update CVars based on instance type
+function ArenaGameSettings:UpdateSettings()
+    local settings = self.db.global
+    local inInstance, instanceType = IsInInstance()
+
+    -- Only update CVars when the instance type changes
+    if instanceType ~= lastInstanceType then
+        lastInstanceType = instanceType
+
+        if instanceType == "arena" then
+            for cvar, key in pairs(cvarToKey) do
+                C_CVar.SetCVar(cvar, settings.arena[key] or tonumber(C_CVar.GetCVar(cvar)))
+            end
+
+        elseif instanceType ~= "arena" then
+            for cvar, key in pairs(cvarToKey) do
+                C_CVar.SetCVar(cvar, settings.outside[key] or tonumber(C_CVar.GetCVar(cvar)))
+            end
+        end
+    end
+
+    -- Always show framerate
+    if FramerateFrame and FramerateFrame.Show and not FramerateFrame:IsShown() then
+        FramerateFrame:Show()
+    end
+end
+
+function ArenaGameSettings:SaveCurrentCVarsToDB()
+    local settings = self.db.global
+    local inInstance, instanceType = IsInInstance()
+
+    if instanceType ~= "arena" then
+        for cvar, key in pairs(cvarToKey) do
+            settings.outside[key] = tonumber(C_CVar.GetCVar(cvar))
+        end
+    end
+end
+
+-- Event handler when player enters the world or changes zones
+function ArenaGameSettings:PLAYER_ENTERING_WORLD()
+    self:UpdateSettings()
+end
+
+-- Event handler for entering/leaving instances
+function ArenaGameSettings:ZONE_CHANGED_NEW_AREA()
+    self:UpdateSettings()
+end
+
+-- Event handler when a CVar is changed
+function ArenaGameSettings:CVAR_UPDATE(event, cvar, value)
+    local settings = self.db.global
+    local inInstance, instanceType = IsInInstance()
+    local key = cvarToKey[cvar]
+
+    if key then
+        if instanceType == "arena" then
+            settings.arena[key] = tonumber(C_CVar.GetCVar(cvar))
+        elseif instanceType ~= "arena" then
+            settings.outside[key] = tonumber(C_CVar.GetCVar(cvar))
+        end
+    end
+end
+
+function ArenaGameSettings:OnInitialize()
+    -- Initialize internal state
+    lastInstanceType = nil
+
+    -- Set up saved variables
+    self.db = LibStub("AceDB-3.0"):New("ArenaGameSettingsDB", {
+        global = {
+            arena = {
+                MusicVolume = 0.00,
+                SFXVolume = 1.00,
+                AmbienceVolume = 0.00,
+                DialogVolume = 0.00,
+                GameplaySFX = 1.00,
+            },
+            outside = {},
+        },
+    })
+end
+
+-- Register events
+function ArenaGameSettings:OnEnable()
+    self:SaveCurrentCVarsToDB()
+
+    self:RegisterEvent("PLAYER_ENTERING_WORLD")
+    self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+    self:RegisterEvent("CVAR_UPDATE")
+end
+
+-- Unregister events
+function ArenaGameSettings:OnDisable()
+    self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+    self:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
+    self:UnregisterEvent("CVAR_UPDATE")
+end
