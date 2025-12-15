@@ -159,42 +159,109 @@ end
 function ArenaGameSettings:SetupOptions()
     local options = {
         type = "group",
-        name = "ArenaGameSettings",
+        name = "Arena Game Settings",
         args = {
+            general = {
+                type = "group",
+                name = "General",
+                order = 1,
+                args = {
+                    header1 = {
+                        type = "header",
+                        name = "General Settings",
+                        order = 1,
+                    },
+                    minimap = {
+                        type = "toggle",
+                        name = "Show Minimap Button",
+                        order = 2,
+                        get = function()
+                            return not self.db.global.minimap.hide
+                        end,
+                        set = function(_, value)
+                            self.db.global.minimap.hide = not value
+                            if value then
+                                LDBIcon:Show("ArenaGameSettings")
+                            else
+                                LDBIcon:Hide("ArenaGameSettings")
+                            end
+                        end,
+                    },
+                    framerate = {
+                        type = "toggle",
+                        name = "Show Framerate",
+                        desc = "Show the framerate all the time.",
+                        order = 3,
+                        get = function()
+                            return self.db.global.showFramerate
+                        end,
+                        set = function(_, value)
+                            self.db.global.showFramerate = value
+                            self:ShowFramerate()
+                        end,
+                    },
+                },
+            },
             audio = {
                 type = "group",
                 name = "Audio",
+                order = 2,
                 childGroups = "tab",
                 args = {
                     arena = {
                         type = "group",
                         name = "Arena",
                         order = 1,
-                        args = {},
+                        args = {
+                            header1 = {
+                                type = "header",
+                                name = "Audio Settings",
+                                order = 1,
+                            },
+                        },
                     },
                     outside = {
                         type = "group",
                         name = "Outside",
                         order = 2,
-                        args = {},
+                        args = {
+                            header1 = {
+                                type = "header",
+                                name = "Audio Settings",
+                                order = 1,
+                            },
+                        },
                     },
                 },
             },
         },
     }
     
-    for cvar, key in pairs(cvarToKey) do
-        options.args.audio.args.outside.args[key] = {
-            type = "range",
-            name = key,
-            min = 0, max = 1, step = 0.01,
-            get = function()
-                return tonumber(C_CVar.GetCVar(cvar))
-            end,
-            set = function(_, value)
-                C_CVar.SetCVar(cvar, value)
-            end,
-        }
+    for group, _ in pairs(options.args.audio.args) do
+        for cvar, key in pairs(cvarToKey) do
+            local inInstance, instanceType = IsInInstance()
+
+            options.args.audio.args[group].args[key] = {
+                type = "range",
+                name = key,
+                min = 0, max = 1, step = 0.01,
+                get = function()
+                    if group == "arena" then
+                        return self.db.global.arena[key] or tonumber(C_CVar.GetCVar(cvar))
+                    elseif group == "outside" then
+                        return self.db.global.outside[key] or tonumber(C_CVar.GetCVar(cvar))
+                    end
+                end,
+                set = function(_, value)
+                    if group == "arena" then
+                        self.db.global.arena[key] = value
+                    elseif group == "outside" then
+                        self.db.global.outside[key] = value
+                    end
+                    self:UpdateSettings()
+                end,
+            }
+        end
     end
 
     AC:RegisterOptionsTable("ArenaGameSettings", options)
