@@ -1,5 +1,9 @@
--- Load Ace3 libraries
+-- Load libraries
 local ArenaGameSettings = LibStub("AceAddon-3.0"):NewAddon("ArenaGameSettings", "AceEvent-3.0")
+local AC = LibStub("AceConfig-3.0")
+local ACD = LibStub("AceConfigDialog-3.0")
+local LDB = LibStub("LibDataBroker-1.1")
+local LDBIcon = LibStub("LibDBIcon-1.0")
 
 -- Local variables to track state
 local lastInstanceType
