@@ -73,6 +73,19 @@ function ArenaGameSettings:SaveCurrentCVarsToDB()
     end
 end
 
+-- Open options panel
+function ArenaGameSettings:OpenOptions()
+	ACD:Open("ArenaGameSettings")
+
+	-- Clamp the options window to the screen
+    local frame = ACD.OpenFrames["ArenaGameSettings"]
+    if frame and frame.frame then
+        frame.frame:SetClampedToScreen(true)
+        frame.frame:SetMovable(true)
+        frame.frame:SetUserPlaced(true)
+    end
+end
+
 -- Event handler when player enters the world or changes zones
 function ArenaGameSettings:PLAYER_ENTERING_WORLD()
     self:UpdateSettings()
