@@ -116,3 +116,37 @@ function ArenaGameSettings:OnDisable()
     self:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
     self:UnregisterEvent("CVAR_UPDATE")
 end
+
+-- Create options panel
+function ArenaGameSettings:SetupOptions()
+    local options = {
+        type = "group",
+        name = "ArenaGameSettings",
+        args = {
+            header = {
+                type = "header",
+                name = "Arena Game Settings",
+                order = 1,
+            },
+            minimap = {
+                type = "toggle",
+                name = "Show Minimap Button",
+                get = function()
+                    return not self.db.global.minimap.hide
+                end,
+                set = function(_, value)
+                    self.db.global.minimap.hide = not value
+                    if value then
+                        LDBIcon:Show("ArenaGameSettings")
+                    else
+                        LDBIcon:Hide("ArenaGameSettings")
+                    end
+                end,
+                order = 2,
+            },
+        },
+    }
+
+    AC:RegisterOptionsTable("ArenaGameSettings", options)
+    ACD:AddToBlizOptions("ArenaGameSettings", "ArenaGameSettings")
+end
