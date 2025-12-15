@@ -19,6 +19,22 @@ local cvarToKey = {
     Sound_PingVolume = "PingVolume",
 }
 
+-- Minimap button
+local minimapDataObject = LDB:NewDataObject("ArenaGameSettings", {
+    type = "launcher",
+    icon = "Interface\\Icons\\Ability_Warrior_BattleShout",
+    OnClick = function(_, button)
+        if button == "LeftButton" then
+            ArenaGameSettings:OpenOptions()
+        end
+    end,
+    OnTooltipShow = function(tooltip)
+        tooltip:AddLine("ArenaGameSettings")
+        tooltip:AddLine("Left-click: Open options", 1, 1, 1)
+    end,
+})
+
+
 -- Function to update CVars based on instance type
 function ArenaGameSettings:UpdateSettings()
     local settings = self.db.global
@@ -89,6 +105,9 @@ function ArenaGameSettings:OnInitialize()
     -- Set up saved variables
     self.db = LibStub("AceDB-3.0"):New("ArenaGameSettingsDB", {
         global = {
+            minimap = {
+                hide = false,
+            },
             arena = {
                 MusicVolume = 0.00,
                 SFXVolume = 1.00,
@@ -99,6 +118,12 @@ function ArenaGameSettings:OnInitialize()
             outside = {},
         },
     })
+
+    -- Create options panel
+    self:SetupOptions()
+
+    -- Minimap button
+    LDBIcon:Register("ArenaGameSettings", minimapDataObject, self.db.global.minimap)
 end
 
 -- Register events
