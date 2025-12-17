@@ -1,11 +1,12 @@
 ## Interface: 110207
 ## Title: Arena Game Settings
-## Notes: Changes game settings when inside arena
-## Author: Pharmac1st
-## Version: 11.02.07.1
-## Category: Interface
-## IconTexture: interface\icons\trade_engineering
+## Category: Game Settings
+## IconTexture: Interface\Icons\Achievement_Featsofstrength_Gladiator_08
 ## SavedVariables: ArenaGameSettingsDB
+## Notes: Changes game settings when inside or outside arena.
+## Author: Pharmac1st
+## Version: @project-version@
+## X-Curse-Project-ID: 1406412
 
 Embeds.xml
 

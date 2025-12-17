@@ -59,7 +59,7 @@ local cvarTable = {
 -- Minimap button
 local minimapDataObject = LDB:NewDataObject("ArenaGameSettings", {
     type = "launcher",
-    icon = "Interface\\Icons\\Achievement_Featsofstrength_Gladiator_10",
+    icon = "Interface\\Icons\\Achievement_Featsofstrength_Gladiator_08",
     OnClick = function(_, button)
         if button == "LeftButton" then
             ArenaGameSettings:OpenOptions()
