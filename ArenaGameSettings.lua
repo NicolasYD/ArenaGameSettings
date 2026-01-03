@@ -7,53 +7,47 @@ local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 
 -- Localize WoW API functions
+local IsInInstance = IsInInstance
 local GetCVar = C_CVar.GetCVar
 local SetCVar = C_CVar.SetCVar
 
 -- Table containing the CVars modified by this addon
 local cvarTable = {
     Sound_MasterVolume = {
-        key = "MasterVolume",
         name = "Master Volume",
         default = 1,
         order = 1
     },
     Sound_MusicVolume = {
-        key = "MusicVolume",
         name = "Music",
         default = 0.4,
         recommended = 0,
         order = 2
     },
     Sound_SFXVolume = {
-        key = "SFXVolume",
         name = "Effects",
         default = 1,
         recommended = 1,
         order = 3
     },
     Sound_AmbienceVolume = {
-        key = "AmbienceVolume",
         name = "Ambience",
         default = 0.6,
         recommended = 0,
         order = 4
     },
     Sound_DialogVolume = {
-        key = "DialogVolume",
         name = "Dialog",
         default = 1,
         recommended = 0,
         order = 5
     },
     Sound_GameplaySFX = {
-        key = "GameplaySFX",
         name = "Gameplay Sound Effects",
         default = 1,
         order = 6
     },
     Sound_PingVolume = {
-        key = "PingVolume",
         name = "Ping Sounds",
         default = 1,
         order = 7
@@ -83,12 +77,12 @@ function ArenaGameSettings:UpdateSettings()
 
     if settings then
         if settings.arena and instanceType == "arena" then
-            for cvar, info in pairs(cvarTable) do
-                SetCVar(cvar, settings.arena[info.key])
+            for cvar, _ in pairs(cvarTable) do
+                SetCVar(cvar, settings.arena[cvar])
             end
         elseif settings.outside and instanceType ~= "arena" then
-            for cvar, info in pairs(cvarTable) do
-                SetCVar(cvar, settings.outside[info.key])
+            for cvar, _ in pairs(cvarTable) do
+                SetCVar(cvar, settings.outside[cvar])
             end
         end
     end
@@ -145,14 +139,13 @@ end
 -- Event handler when a CVar is changed
 function ArenaGameSettings:CVAR_UPDATE(event, cvar, value)
     local settings = self.db.global
-    local info = cvarTable[cvar]
     local inInstance, instanceType = IsInInstance()
 
-    if settings and info and info.key then
+    if settings then
         if instanceType == "arena" then
-            settings.arena[info.key] = tonumber(GetCVar(cvar))
+            settings.arena[cvar] = tonumber(GetCVar(cvar))
         elseif instanceType ~= "arena" then
-            settings.outside[info.key] = tonumber(GetCVar(cvar))
+            settings.outside[cvar] = tonumber(GetCVar(cvar))
         end
     end
 end
@@ -296,9 +289,7 @@ function ArenaGameSettings:SetupOptions()
 
     for group, _ in pairs(options.args.audio.args) do
         for cvar, info in pairs(cvarTable) do
-            local inInstance, instanceType = IsInInstance()
-
-            options.args.audio.args[group].args[info.key] = {
+            options.args.audio.args[group].args[cvar] = {
                 type = "range",
                 name = info.name,
                 desc = function()
@@ -319,16 +310,16 @@ function ArenaGameSettings:SetupOptions()
                 order = 1 + info.order,
                 get = function()
                     if group == "arena" then
-                        return self.db.global.arena[info.key]
+                        return self.db.global.arena[cvar]
                     elseif group == "outside" then
-                        return self.db.global.outside[info.key]
+                        return self.db.global.outside[cvar]
                     end
                 end,
                 set = function(_, value)
                     if group == "arena" then
-                        self.db.global.arena[info.key] = value
+                        self.db.global.arena[cvar] = value
                     elseif group == "outside" then
-                        self.db.global.outside[info.key] = value
+                        self.db.global.outside[cvar] = value
                     end
                     self:UpdateSettings()
                 end,
