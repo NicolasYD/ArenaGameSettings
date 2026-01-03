@@ -1,3 +1,6 @@
+v11.2.7.5
+- Added AutoPushSpellToActionBar to general settings.
+
 v11.2.7.4
 - Added compute effects to graphics settings.
 

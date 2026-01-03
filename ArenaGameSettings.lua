@@ -16,11 +16,17 @@ local GetCVarDefault = C_CVar.GetCVarDefault
 local cvarTable = {
     -- General Settings
     general = {
+        AutoPushSpellToActionBar = {
+            name = "Auto Push Spell To Action Bar",
+            desc = "\nDetermines if spells are automatically pushed to the Action Bar.",
+            type = "toggle",
+            order = 1,
+        },
         SpellQueueWindow = {
             name = "Spell Queue Window",
             desc = string.format("Recommended Value: Your average |cFF00FF00%s|r", "latency + 100."),
-            type = "slider",
-            order = 1,
+            type = "range",
+            order = 2,
         },
     },
 
@@ -28,41 +34,41 @@ local cvarTable = {
     audio = {
         Sound_MasterVolume = {
             name = "Master Volume",
-            type = "slider",
+            type = "range",
             order = 1,
         },
         Sound_MusicVolume = {
             name = "Music",
             desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
-            type = "slider",
+            type = "range",
             order = 2,
         },
         Sound_SFXVolume = {
             name = "Effects",
             desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 1),
-            type = "slider",
+            type = "range",
             order = 3,
         },
         Sound_AmbienceVolume = {
             name = "Ambience",
             desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
-            type = "slider",
+            type = "range",
             order = 4,
         },
         Sound_DialogVolume = {
             name = "Dialog",
             desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
-            type = "slider",
+            type = "range",
             order = 5,
         },
         Sound_GameplaySFX = {
             name = "Gameplay Sound Effects",
-            type = "slider",
+            type = "range",
             order = 6,
         },
         Sound_PingVolume = {
             name = "Ping Sounds",
-            type = "slider",
+            type = "range",
             order = 7,
         },
     },
@@ -226,6 +232,7 @@ function ArenaGameSettings:OnInitialize()
                 minimapPos = 15,
             },
             showFramerate = true,
+            AutoPushSpellToActionBar = GetCVar("AutoPushSpellToActionBar"),
             SpellQueueWindow = GetCVar("SpellQueueWindow"),
             arena = {
                 -- Audio Settings
@@ -340,28 +347,6 @@ function ArenaGameSettings:SetupOptions()
                             self:ShowFramerate()
                         end,
                     },
-                    SpellQueueWindow = {
-                        type = "range",
-                        name = cvarTable.general["SpellQueueWindow"].name,
-                        desc = function()
-                            local default = GetCVarDefault("SpellQueueWindow")
-
-                            return string.format(
-                                "Default Value: |cFFFF0000%s|r\n%s",
-                                string.format("%s", default),
-                                cvarTable.general["SpellQueueWindow"].desc
-                            )
-                        end,
-                        min = 0, max = tonumber(GetCVarDefault("SpellQueueWindow")), step = 1,
-                        order = 3,
-                        get = function()
-                            return tonumber(self.db.global["SpellQueueWindow"])
-                        end,
-                        set = function(_, value)
-                            self.db.global["SpellQueueWindow"] = tostring(value)
-                            self:UpdateSettings()
-                        end,
-                    },
                 },
             },
             audio = {
@@ -431,12 +416,82 @@ function ArenaGameSettings:SetupOptions()
         },
     }
 
+    -- General Settings
+    for cvar, info in pairs(cvarTable.general) do
+
+        -- Ranges
+        if info.type == "range" then
+            options.args.general.args[cvar] = {
+                type = "range",
+                name = info.name,
+                desc = function()
+                    local default = GetCVarDefault(cvar)
+
+                    return string.format(
+                        "Default Value: |cFFFF0000%s|r\n%s",
+                        string.format("%s", default),
+                        cvarTable.general["SpellQueueWindow"].desc
+                    )
+                end,
+                min = 0, max = tonumber(GetCVarDefault(cvar)), step = 1,
+                order = 2 + info.order,
+                get = function()
+                    return tonumber(self.db.global[cvar])
+                end,
+                set = function(_, value)
+                    self.db.global[cvar] = tostring(value)
+                    self:UpdateSettings()
+                end,
+            }
+        end
+
+        -- Toggles
+        if info.type == "toggle" then
+            options.args.general.args[cvar] = {
+                type = "toggle",
+                name = info.name,
+                desc = function()
+
+                    -- Helper function to return text for CVar value
+                    local function translateDefaultValue(cvar_name)
+                        local default = GetCVarDefault(cvar_name)
+                        if default == "1" then
+                            return "Enabled"
+                        elseif default == "0" then
+                            return "Disabled"
+                        end
+                        return default
+                    end
+
+                    local default = translateDefaultValue(cvar)
+
+                    if info.desc then
+                        return string.format(
+                            "Default: |cFFFF0000%s|r\n%s",
+                            default,
+                            info.desc
+                        )
+                    end
+                end,
+                width = "full",
+                order = 2 + info.order,
+                get = function()
+                        return self.db.global[cvar] == "1"
+                end,
+                set = function(_, value)
+                    self.db.global[cvar] = value and "1" or "0"
+                    self:UpdateSettings()
+                end,
+            }
+        end
+    end
+
     -- Audio Settings
     for group, _ in pairs(options.args.audio.args) do
         for cvar, info in pairs(cvarTable.audio) do
 
-            -- Sliders
-            if info.type == "slider" then
+            -- Ranges
+            if info.type == "range" then
                 options.args.audio.args[group].args[cvar] = {
                     type = "range",
                     name = info.name,
