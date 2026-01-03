@@ -1,3 +1,6 @@
+v11.2.7.3
+- Added projected textures to graphics settings.
+
 v11.2.7.2
 - Added slider to adjust spell queue window.
 

@@ -19,7 +19,7 @@ local cvarTable = {
         SpellQueueWindow = {
             name = "Spell Queue Window",
             desc = string.format("Recommended Value: Your average |cFF00FF00%s|r", "latency + 100."),
-            order = 1
+            order = 1,
         },
     },
 
@@ -27,37 +27,46 @@ local cvarTable = {
     audio = {
         Sound_MasterVolume = {
             name = "Master Volume",
-            order = 1
+            order = 1,
         },
         Sound_MusicVolume = {
             name = "Music",
             desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
-            order = 2
+            order = 2,
         },
         Sound_SFXVolume = {
             name = "Effects",
             desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 1),
-            order = 3
+            order = 3,
         },
         Sound_AmbienceVolume = {
             name = "Ambience",
             desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
-            order = 4
+            order = 4,
         },
         Sound_DialogVolume = {
             name = "Dialog",
             desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
-            order = 5
+            order = 5,
         },
         Sound_GameplaySFX = {
             name = "Gameplay Sound Effects",
-            order = 6
+            order = 6,
         },
         Sound_PingVolume = {
             name = "Ping Sounds",
-            order = 7
+            order = 7,
         },
-    }
+    },
+
+    -- Graphics Settings
+    graphics = {
+        graphicsProjectedTextures ={
+            name = "Projected Textures",
+            desc = string.format("Recommended: |cFF00FF00%s|r", "Enabled"),
+            order = 1,
+        },
+    },
 }
 
 -- Minimap button
@@ -81,6 +90,23 @@ function ArenaGameSettings:UpdateSettings()
     local settings = self.db.global
     local inInstance, instanceType = IsInInstance()
 
+    -- Helper function to apply settings for arena and outside
+    local function applySettings(category)
+        if settings and settings.arena and instanceType == "arena" then
+            for cvar, _ in pairs(cvarTable[category]) do
+                if settings.arena[cvar] ~= GetCVar(cvar) then
+                    SetCVar(cvar, settings.arena[cvar])
+                end
+            end
+        elseif settings and settings.outside and instanceType ~= "arena" then
+            for cvar, _ in pairs(cvarTable[category]) do
+                if settings.outside[cvar] ~= GetCVar(cvar) then
+                    SetCVar(cvar, settings.outside[cvar])
+                end
+            end
+        end
+    end
+
     -- General Settings
     if settings then
         for cvar, _ in pairs(cvarTable.general) do
@@ -91,19 +117,10 @@ function ArenaGameSettings:UpdateSettings()
     end
 
     -- Audio Settings
-    if settings and settings.arena and instanceType == "arena" then
-        for cvar, _ in pairs(cvarTable.audio) do
-            if settings.arena[cvar] ~= GetCVar(cvar) then
-                SetCVar(cvar, settings.arena[cvar])
-            end
-        end
-    elseif settings and settings.outside and instanceType ~= "arena" then
-        for cvar, _ in pairs(cvarTable.audio) do
-            if settings.outside[cvar] ~= GetCVar(cvar) then
-                SetCVar(cvar, settings.outside[cvar])
-            end
-        end
-    end
+    applySettings("audio")
+
+    -- Graphics Settings
+    applySettings("graphics")
 
     self:ShowFramerate()
 end
@@ -185,7 +202,7 @@ function ArenaGameSettings:OnInitialize()
             showFramerate = true,
             SpellQueueWindow = GetCVar("SpellQueueWindow"),
             arena = {
-                -- Sound Settings
+                -- Audio Settings
                 Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
                 Sound_MusicVolume = "0",
                 Sound_SFXVolume = "1",
@@ -193,9 +210,12 @@ function ArenaGameSettings:OnInitialize()
                 Sound_DialogVolume = "0",
                 Sound_GameplaySFX = "1",
                 Sound_PingVolume = GetCVar("Sound_PingVolume"),
+
+                -- Graphics Settings
+                graphicsProjectedTextures = "1",
             },
             outside = {
-                -- Sound Settings
+                -- Audio Settings
                 Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
                 Sound_MusicVolume = GetCVar("Sound_MusicVolume"),
                 Sound_SFXVolume = GetCVar("Sound_SFXVolume"),
@@ -203,6 +223,9 @@ function ArenaGameSettings:OnInitialize()
                 Sound_DialogVolume = GetCVar("Sound_DialogVolume"),
                 Sound_GameplaySFX = GetCVar("Sound_GameplaySFX"),
                 Sound_PingVolume = GetCVar("Sound_PingVolume"),
+
+                -- Graphics Settings
+                graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
         },
     })
@@ -345,10 +368,42 @@ function ArenaGameSettings:SetupOptions()
                     },
                 },
             },
+            graphics = {
+                type = "group",
+                name = "Graphics",
+                order = 4,
+                childGroups = "tab",
+                args = {
+                    arena = {
+                        type = "group",
+                        name = "Arena",
+                        order = 1,
+                        args = {
+                            header1 = {
+                                type = "header",
+                                name = "Graphics Settings",
+                                order = 1,
+                            },
+                        },
+                    },
+                    outside = {
+                        type = "group",
+                        name = "Outside",
+                        order = 2,
+                        args = {
+                            header1 = {
+                                type = "header",
+                                name = "Graphics Settings",
+                                order = 1,
+                            },
+                        },
+                    },
+                },
+            },
         },
     }
 
-    -- Audio Settings
+    -- Audio Settings (sliders)
     for group, _ in pairs(options.args.audio.args) do
         for cvar, info in pairs(cvarTable.audio) do
             options.args.audio.args[group].args[cvar] = {
@@ -384,6 +439,60 @@ function ArenaGameSettings:SetupOptions()
                         self.db.global.arena[cvar] = tostring(value)
                     elseif group == "outside" then
                         self.db.global.outside[cvar] = tostring(value)
+                    end
+                    self:UpdateSettings()
+                end,
+            }
+        end
+    end
+
+    -- Graphics Settings (toggles)
+    for group, _ in pairs(options.args.graphics.args) do
+        for cvar, info in pairs(cvarTable.graphics) do
+            options.args.graphics.args[group].args[cvar] = {
+                type = "toggle",
+                name = info.name,
+                desc = function()
+
+                    -- Helper function to return text for CVar value
+                    local function translateDefaultValue(cvar_name)
+                        local default = GetCVarDefault(cvar_name)
+                        if default == "1" then
+                            return "Enabled"
+                        elseif default == "0" then
+                            return "Disabled"
+                        end
+                        return default
+                    end
+
+                    local default = translateDefaultValue(cvar)
+
+                    if group == "arena" and info.desc then
+                        return string.format(
+                            "Default: |cFFFF0000%s|r\n%s",
+                            default,
+                            info.desc
+                        )
+                    else
+                        return string.format(
+                            "Default: |cFFFF0000%s|r",
+                            default
+                        )
+                    end
+                end,
+                order = 1 + info.order,
+                get = function()
+                    if group == "arena" then
+                        return self.db.global.arena[cvar] == "1"
+                    elseif group == "outside" then
+                        return self.db.global.outside[cvar] == "1"
+                    end
+                end,
+                set = function(_, value)
+                    if group == "arena" then
+                        self.db.global.arena[cvar] = value and "1" or "0"
+                    elseif group == "outside" then
+                        self.db.global.outside[cvar] = value and "1" or "0"
                     end
                     self:UpdateSettings()
                 end,
