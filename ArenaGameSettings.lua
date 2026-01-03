@@ -19,6 +19,7 @@ local cvarTable = {
         SpellQueueWindow = {
             name = "Spell Queue Window",
             desc = string.format("Recommended Value: Your average |cFF00FF00%s|r", "latency + 100."),
+            type = "slider",
             order = 1,
         },
     },
@@ -27,44 +28,69 @@ local cvarTable = {
     audio = {
         Sound_MasterVolume = {
             name = "Master Volume",
+            type = "slider",
             order = 1,
         },
         Sound_MusicVolume = {
             name = "Music",
             desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
+            type = "slider",
             order = 2,
         },
         Sound_SFXVolume = {
             name = "Effects",
             desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 1),
+            type = "slider",
             order = 3,
         },
         Sound_AmbienceVolume = {
             name = "Ambience",
             desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
+            type = "slider",
             order = 4,
         },
         Sound_DialogVolume = {
             name = "Dialog",
             desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
+            type = "slider",
             order = 5,
         },
         Sound_GameplaySFX = {
             name = "Gameplay Sound Effects",
+            type = "slider",
             order = 6,
         },
         Sound_PingVolume = {
             name = "Ping Sounds",
+            type = "slider",
             order = 7,
         },
     },
 
     -- Graphics Settings
     graphics = {
-        graphicsProjectedTextures ={
-            name = "Projected Textures",
-            desc = string.format("Recommended: |cFF00FF00%s|r", "Enabled"),
+        graphicsComputeEffects = {
+            name = "Compute Effects",
+            desc = string.format("Recommended: |cFF00FF00%s|r\n\nReduces load on CPU to increase FPS.", "Disabled"),
+            type = "select",
+            values = {
+                ["0"] = "Disabled",
+                ["1"] = "Low",
+                ["2"] = "Good",
+                ["3"] = "High",
+                ["4"] = "Ultra"
+            },
             order = 1,
+        },
+        graphicsProjectedTextures = {
+            name = "Projected Textures",
+            desc = string.format("Recommended: |cFF00FF00%s|r\n\nMakes sure that important ground effects are visible.", "Enabled"),
+            type = "select",
+            values = {
+                ["0"] = "Disabled",
+                ["1"] = "Enabled",
+            },
+            order = 2,
         },
     },
 }
@@ -212,6 +238,7 @@ function ArenaGameSettings:OnInitialize()
                 Sound_PingVolume = GetCVar("Sound_PingVolume"),
 
                 -- Graphics Settings
+                graphicsComputeEffects = "0",
                 graphicsProjectedTextures = "1",
             },
             outside = {
@@ -225,6 +252,7 @@ function ArenaGameSettings:OnInitialize()
                 Sound_PingVolume = GetCVar("Sound_PingVolume"),
 
                 -- Graphics Settings
+                graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
         },
@@ -403,100 +431,149 @@ function ArenaGameSettings:SetupOptions()
         },
     }
 
-    -- Audio Settings (sliders)
+    -- Audio Settings
     for group, _ in pairs(options.args.audio.args) do
         for cvar, info in pairs(cvarTable.audio) do
-            options.args.audio.args[group].args[cvar] = {
-                type = "range",
-                name = info.name,
-                desc = function()
-                    local default = GetCVarDefault(cvar)
 
-                    if group == "arena" and info.desc then
-                        return string.format(
-                            "Default Value: |cFFFF0000%s|r\n%s",
-                            string.format("%.1f", default),
-                            info.desc
-                        )
-                    else
-                        return string.format(
-                            "Default Value: |cFFFF0000%s|r",
-                            string.format("%.1f", default)
-                        )
-                    end
-                end,
-                min = 0, max = 1, step = 0.01,
-                order = 1 + info.order,
-                get = function()
-                    if group == "arena" then
-                        return tonumber(self.db.global.arena[cvar])
-                    elseif group == "outside" then
-                        return tonumber(self.db.global.outside[cvar])
-                    end
-                end,
-                set = function(_, value)
-                    if group == "arena" then
-                        self.db.global.arena[cvar] = tostring(value)
-                    elseif group == "outside" then
-                        self.db.global.outside[cvar] = tostring(value)
-                    end
-                    self:UpdateSettings()
-                end,
-            }
+            -- Sliders
+            if info.type == "slider" then
+                options.args.audio.args[group].args[cvar] = {
+                    type = "range",
+                    name = info.name,
+                    desc = function()
+                        local default = GetCVarDefault(cvar)
+
+                        if group == "arena" and info.desc then
+                            return string.format(
+                                "Default Value: |cFFFF0000%s|r\n%s",
+                                string.format("%.1f", default),
+                                info.desc
+                            )
+                        else
+                            return string.format(
+                                "Default Value: |cFFFF0000%s|r",
+                                string.format("%.1f", default)
+                            )
+                        end
+                    end,
+                    min = 0, max = 1, step = 0.01,
+                    order = 1 + info.order,
+                    get = function()
+                        if group == "arena" then
+                            return tonumber(self.db.global.arena[cvar])
+                        elseif group == "outside" then
+                            return tonumber(self.db.global.outside[cvar])
+                        end
+                    end,
+                    set = function(_, value)
+                        if group == "arena" then
+                            self.db.global.arena[cvar] = tostring(value)
+                        elseif group == "outside" then
+                            self.db.global.outside[cvar] = tostring(value)
+                        end
+                        self:UpdateSettings()
+                    end,
+                }
+            end
         end
     end
 
-    -- Graphics Settings (toggles)
+    -- Graphics Settings
     for group, _ in pairs(options.args.graphics.args) do
         for cvar, info in pairs(cvarTable.graphics) do
-            options.args.graphics.args[group].args[cvar] = {
-                type = "toggle",
-                name = info.name,
-                desc = function()
 
-                    -- Helper function to return text for CVar value
-                    local function translateDefaultValue(cvar_name)
-                        local default = GetCVarDefault(cvar_name)
-                        if default == "1" then
-                            return "Enabled"
-                        elseif default == "0" then
-                            return "Disabled"
+            -- Selects
+            if info.type == "select" then
+                options.args.graphics.args[group].args[cvar] = {
+                    type = "select",
+                    name = info.name,
+                    desc = function ()
+                        local default_value = GetCVarDefault(cvar)
+                        local default_text = info.values[default_value]
+                        if group == "arena" and info.desc then
+                            return string.format(
+                                "Default: |cFFFF0000%s|r\n%s",
+                                default_text,
+                                info.desc
+                            )
+                        else
+                            return string.format(
+                                "Default: |cFFFF0000%s|r",
+                                default_text
+                            )
                         end
-                        return default
-                    end
+                    end,
+                    values = info.values,
+                    order = 1 + info.order,
+                    get = function()
+                        if group == "arena" then
+                            return self.db.global.arena[cvar]
+                        elseif group == "outside" then
+                            return self.db.global.outside[cvar]
+                        end
+                    end,
+                    set = function(_, value)
+                        if group == "arena" then
+                            self.db.global.arena[cvar] = value
+                        elseif group == "outside" then
+                            self.db.global.outside[cvar] = value
+                        end
+                        self:UpdateSettings()
+                    end,
+                }
+            end
 
-                    local default = translateDefaultValue(cvar)
+            -- Toggles
+            --[[ if info.type == "toggle" then
+                options.args.graphics.args[group].args[cvar] = {
+                    type = "toggle",
+                    name = info.name,
+                    desc = function()
 
-                    if group == "arena" and info.desc then
-                        return string.format(
-                            "Default: |cFFFF0000%s|r\n%s",
-                            default,
-                            info.desc
-                        )
-                    else
-                        return string.format(
-                            "Default: |cFFFF0000%s|r",
-                            default
-                        )
-                    end
-                end,
-                order = 1 + info.order,
-                get = function()
-                    if group == "arena" then
-                        return self.db.global.arena[cvar] == "1"
-                    elseif group == "outside" then
-                        return self.db.global.outside[cvar] == "1"
-                    end
-                end,
-                set = function(_, value)
-                    if group == "arena" then
-                        self.db.global.arena[cvar] = value and "1" or "0"
-                    elseif group == "outside" then
-                        self.db.global.outside[cvar] = value and "1" or "0"
-                    end
-                    self:UpdateSettings()
-                end,
-            }
+                        -- Helper function to return text for CVar value
+                        local function translateDefaultValue(cvar_name)
+                            local default = GetCVarDefault(cvar_name)
+                            if default == "1" then
+                                return "Enabled"
+                            elseif default == "0" then
+                                return "Disabled"
+                            end
+                            return default
+                        end
+
+                        local default = translateDefaultValue(cvar)
+
+                        if group == "arena" and info.desc then
+                            return string.format(
+                                "Default: |cFFFF0000%s|r\n%s",
+                                default,
+                                info.desc
+                            )
+                        else
+                            return string.format(
+                                "Default: |cFFFF0000%s|r",
+                                default
+                            )
+                        end
+                    end,
+                    order = 1 + info.order,
+                    get = function()
+                        if group == "arena" then
+                            return self.db.global.arena[cvar] == "1"
+                        elseif group == "outside" then
+                            return self.db.global.outside[cvar] == "1"
+                        end
+                    end,
+                    set = function(_, value)
+                        if group == "arena" then
+                            self.db.global.arena[cvar] = value and "1" or "0"
+                        elseif group == "outside" then
+                            self.db.global.outside[cvar] = value and "1" or "0"
+                        end
+                        self:UpdateSettings()
+                    end,
+                }
+            end ]]
         end
     end
 
