@@ -70,7 +70,7 @@ local minimapDataObject = LDB:NewDataObject("ArenaGameSettings", {
         end
     end,
     OnTooltipShow = function(tooltip)
-        tooltip:AddLine("ArenaGameSettings")
+        tooltip:AddLine("Arena Game Settings")
         tooltip:AddLine("Left-click: Open options", 1, 1, 1)
     end,
 })
@@ -81,28 +81,19 @@ function ArenaGameSettings:UpdateSettings()
     local settings = self.db.global
     local inInstance, instanceType = IsInInstance()
 
-    if instanceType == "arena" then
-        for cvar, info in pairs(cvarTable) do
-            C_CVar.SetCVar(cvar, settings.arena[info.key] or tonumber(C_CVar.GetCVar(cvar)))
-        end
-    elseif instanceType ~= "arena" then
-        for cvar, info in pairs(cvarTable) do
-            C_CVar.SetCVar(cvar, settings.outside[info.key] or tonumber(C_CVar.GetCVar(cvar)))
+    if settings then
+        if settings.arena and instanceType == "arena" then
+            for cvar, info in pairs(cvarTable) do
+                SetCVar(cvar, settings.arena[info.key])
+            end
+        elseif settings.outside and instanceType ~= "arena" then
+            for cvar, info in pairs(cvarTable) do
+                SetCVar(cvar, settings.outside[info.key])
+            end
         end
     end
 
     self:ShowFramerate()
-end
-
-function ArenaGameSettings:SaveCurrentCVarsToDB()
-    local settings = self.db.global
-    local inInstance, instanceType = IsInInstance()
-
-    if instanceType ~= "arena" then
-        for cvar, info in pairs(cvarTable) do
-            settings.outside[info.key] = tonumber(C_CVar.GetCVar(cvar))
-        end
-    end
 end
 
 -- Display the framerate
@@ -154,14 +145,14 @@ end
 -- Event handler when a CVar is changed
 function ArenaGameSettings:CVAR_UPDATE(event, cvar, value)
     local settings = self.db.global
-    local inInstance, instanceType = IsInInstance()
     local info = cvarTable[cvar]
+    local inInstance, instanceType = IsInInstance()
 
-    if info and info.key then
+    if settings and info and info.key then
         if instanceType == "arena" then
-            settings.arena[info.key] = tonumber(C_CVar.GetCVar(cvar))
+            settings.arena[info.key] = tonumber(GetCVar(cvar))
         elseif instanceType ~= "arena" then
-            settings.outside[info.key] = tonumber(C_CVar.GetCVar(cvar))
+            settings.outside[info.key] = tonumber(GetCVar(cvar))
         end
     end
 end
@@ -176,13 +167,23 @@ function ArenaGameSettings:OnInitialize()
             },
             showFramerate = true,
             arena = {
-                MusicVolume = 0.00,
-                SFXVolume = 1.00,
-                AmbienceVolume = 0.00,
-                DialogVolume = 0.00,
-                GameplaySFX = 1.00,
+                Sound_MasterVolume = tonumber(GetCVar("Sound_MasterVolume")),
+                Sound_MusicVolume = 0.00,
+                Sound_SFXVolume = 1.00,
+                Sound_AmbienceVolume = 0.00,
+                Sound_DialogVolume = 0.00,
+                Sound_GameplaySFX = 1.00,
+                Sound_PingVolume = tonumber(GetCVar("Sound_PingVolume")),
             },
-            outside = {},
+            outside = {
+                Sound_MasterVolume = tonumber(GetCVar("Sound_MasterVolume")),
+                Sound_MusicVolume = tonumber(GetCVar("Sound_MusicVolume")),
+                Sound_SFXVolume = tonumber(GetCVar("Sound_SFXVolume")),
+                Sound_AmbienceVolume = tonumber(GetCVar("Sound_AmbienceVolume")),
+                Sound_DialogVolume = tonumber(GetCVar("Sound_DialogVolume")),
+                Sound_GameplaySFX = tonumber(GetCVar("Sound_GameplaySFX")),
+                Sound_PingVolume = tonumber(GetCVar("Sound_PingVolume")),
+            },
         },
     })
 
@@ -198,8 +199,6 @@ end
 
 -- Register events
 function ArenaGameSettings:OnEnable()
-    self:SaveCurrentCVarsToDB()
-
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
     self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
     self:RegisterEvent("CVAR_UPDATE")
@@ -294,7 +293,7 @@ function ArenaGameSettings:SetupOptions()
             },
         },
     }
-    
+
     for group, _ in pairs(options.args.audio.args) do
         for cvar, info in pairs(cvarTable) do
             local inInstance, instanceType = IsInInstance()
@@ -320,9 +319,9 @@ function ArenaGameSettings:SetupOptions()
                 order = 1 + info.order,
                 get = function()
                     if group == "arena" then
-                        return self.db.global.arena[info.key] or tonumber(C_CVar.GetCVar(cvar))
+                        return self.db.global.arena[info.key]
                     elseif group == "outside" then
-                        return self.db.global.outside[info.key] or tonumber(C_CVar.GetCVar(cvar))
+                        return self.db.global.outside[info.key]
                     end
                 end,
                 set = function(_, value)
