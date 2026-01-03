@@ -18,6 +18,7 @@ local cvarTable = {
     general = {
         SpellQueueWindow = {
             name = "Spell Queue Window",
+            desc = string.format("Recommended Value: Your average |cFF00FF00%s|r", "latency + 100."),
             order = 1
         },
     },
@@ -236,14 +237,14 @@ function ArenaGameSettings:SetupOptions()
         type = "group",
         name = "Arena Game Settings",
         args = {
-            general = {
+            addon = {
                 type = "group",
-                name = "General",
+                name = "AddOn",
                 order = 1,
                 args = {
                     header1 = {
                         type = "header",
-                        name = "General Settings",
+                        name = "AddOn Settings",
                         order = 1,
                     },
                     minimap = {
@@ -263,11 +264,23 @@ function ArenaGameSettings:SetupOptions()
                             end
                         end,
                     },
+                }
+            },
+            general = {
+                type = "group",
+                name = "General",
+                order = 2,
+                args = {
+                    header1 = {
+                        type = "header",
+                        name = "General Settings",
+                        order = 1,
+                    },
                     framerate = {
                         type = "toggle",
                         name = "Framerate",
                         desc = "Show the framerate all the time.",
-                        order = 3,
+                        order = 2,
                         get = function()
                             return self.db.global.showFramerate
                         end,
@@ -276,12 +289,34 @@ function ArenaGameSettings:SetupOptions()
                             self:ShowFramerate()
                         end,
                     },
+                    SpellQueueWindow = {
+                        type = "range",
+                        name = cvarTable.general["SpellQueueWindow"].name,
+                        desc = function()
+                            local default = GetCVarDefault("SpellQueueWindow")
+
+                            return string.format(
+                                "Default Value: |cFFFF0000%s|r\n%s",
+                                string.format("%s", default),
+                                cvarTable.general["SpellQueueWindow"].desc
+                            )
+                        end,
+                        min = 0, max = tonumber(GetCVarDefault("SpellQueueWindow")), step = 1,
+                        order = 3,
+                        get = function()
+                            return tonumber(self.db.global["SpellQueueWindow"])
+                        end,
+                        set = function(_, value)
+                            self.db.global["SpellQueueWindow"] = tostring(value)
+                            self:UpdateSettings()
+                        end,
+                    },
                 },
             },
             audio = {
                 type = "group",
                 name = "Audio",
-                order = 2,
+                order = 3,
                 childGroups = "tab",
                 args = {
                     arena = {
@@ -313,6 +348,7 @@ function ArenaGameSettings:SetupOptions()
         },
     }
 
+    -- Audio Settings
     for group, _ in pairs(options.args.audio.args) do
         for cvar, info in pairs(cvarTable.audio) do
             options.args.audio.args[group].args[cvar] = {
@@ -323,7 +359,7 @@ function ArenaGameSettings:SetupOptions()
 
                     if group == "arena" and info.desc then
                         return string.format(
-                            "Default Value: |cFFFF0000%s|r\n%s|r",
+                            "Default Value: |cFFFF0000%s|r\n%s",
                             string.format("%.1f", default),
                             info.desc
                         )
