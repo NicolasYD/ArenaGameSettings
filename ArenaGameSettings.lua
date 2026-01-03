@@ -10,48 +10,53 @@ local LDBIcon = LibStub("LibDBIcon-1.0")
 local IsInInstance = IsInInstance
 local GetCVar = C_CVar.GetCVar
 local SetCVar = C_CVar.SetCVar
+local GetCVarDefault = C_CVar.GetCVarDefault
 
 -- Table containing the CVars modified by this addon
 local cvarTable = {
-    Sound_MasterVolume = {
-        name = "Master Volume",
-        default = "1",
-        order = 1
+    -- General Settings
+    general = {
+        SpellQueueWindow = {
+            name = "Spell Queue Window",
+            order = 1
+        },
     },
-    Sound_MusicVolume = {
-        name = "Music",
-        default = "0.4",
-        recommended = "0",
-        order = 2
-    },
-    Sound_SFXVolume = {
-        name = "Effects",
-        default = "1",
-        recommended = "1",
-        order = 3
-    },
-    Sound_AmbienceVolume = {
-        name = "Ambience",
-        default = "0.6",
-        recommended = "0",
-        order = 4
-    },
-    Sound_DialogVolume = {
-        name = "Dialog",
-        default = "1",
-        recommended = "0",
-        order = 5
-    },
-    Sound_GameplaySFX = {
-        name = "Gameplay Sound Effects",
-        default = "1",
-        order = 6
-    },
-    Sound_PingVolume = {
-        name = "Ping Sounds",
-        default = "1",
-        order = 7
-    },
+
+    -- Audio Settings
+    audio = {
+        Sound_MasterVolume = {
+            name = "Master Volume",
+            order = 1
+        },
+        Sound_MusicVolume = {
+            name = "Music",
+            desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
+            order = 2
+        },
+        Sound_SFXVolume = {
+            name = "Effects",
+            desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 1),
+            order = 3
+        },
+        Sound_AmbienceVolume = {
+            name = "Ambience",
+            desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
+            order = 4
+        },
+        Sound_DialogVolume = {
+            name = "Dialog",
+            desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
+            order = 5
+        },
+        Sound_GameplaySFX = {
+            name = "Gameplay Sound Effects",
+            order = 6
+        },
+        Sound_PingVolume = {
+            name = "Ping Sounds",
+            order = 7
+        },
+    }
 }
 
 -- Minimap button
@@ -75,18 +80,26 @@ function ArenaGameSettings:UpdateSettings()
     local settings = self.db.global
     local inInstance, instanceType = IsInInstance()
 
+    -- General Settings
     if settings then
-        if settings.arena and instanceType == "arena" then
-            for cvar, _ in pairs(cvarTable) do
-                if settings.arena[cvar] ~= GetCVar(cvar) then
-                    SetCVar(cvar, settings.arena[cvar])
-                end
+        for cvar, _ in pairs(cvarTable.general) do
+            if settings[cvar] ~= GetCVar(cvar) then
+                SetCVar(cvar, settings[cvar])
             end
-        elseif settings.outside and instanceType ~= "arena" then
-            for cvar, _ in pairs(cvarTable) do
-                if settings.outside[cvar] ~= GetCVar(cvar) then
-                    SetCVar(cvar, settings.outside[cvar])
-                end
+        end
+    end
+
+    -- Audio Settings
+    if settings and settings.arena and instanceType == "arena" then
+        for cvar, _ in pairs(cvarTable.audio) do
+            if settings.arena[cvar] ~= GetCVar(cvar) then
+                SetCVar(cvar, settings.arena[cvar])
+            end
+        end
+    elseif settings and settings.outside and instanceType ~= "arena" then
+        for cvar, _ in pairs(cvarTable.audio) do
+            if settings.outside[cvar] ~= GetCVar(cvar) then
+                SetCVar(cvar, settings.outside[cvar])
             end
         end
     end
@@ -145,7 +158,13 @@ function ArenaGameSettings:CVAR_UPDATE(event, cvar, value)
     local settings = self.db.global
     local inInstance, instanceType = IsInInstance()
 
-    if settings and cvarTable[cvar] then
+    -- General Settings
+    if settings and cvarTable.general[cvar] then
+        settings[cvar] = GetCVar(cvar)
+    end
+
+    -- Audio Settings
+    if settings and cvarTable.audio[cvar] then
         if settings.arena and instanceType == "arena" then
             settings.arena[cvar] = GetCVar(cvar)
         elseif settings.outside and instanceType ~= "arena" then
@@ -163,6 +182,7 @@ function ArenaGameSettings:OnInitialize()
                 minimapPos = 15,
             },
             showFramerate = true,
+            SpellQueueWindow = GetCVar("SpellQueueWindow"),
             arena = {
                 -- Sound Settings
                 Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
@@ -294,21 +314,23 @@ function ArenaGameSettings:SetupOptions()
     }
 
     for group, _ in pairs(options.args.audio.args) do
-        for cvar, info in pairs(cvarTable) do
+        for cvar, info in pairs(cvarTable.audio) do
             options.args.audio.args[group].args[cvar] = {
                 type = "range",
                 name = info.name,
                 desc = function()
-                    if group == "arena" and info and info.default and info.recommended then
+                    local default = GetCVarDefault(cvar)
+
+                    if group == "arena" and info.desc then
                         return string.format(
-                            "Default Value: |cFFFF0000%s|r\nRecommended Value: |cFF00FF00%s|r",
-                            info.default,
-                            info.recommended
+                            "Default Value: |cFFFF0000%s|r\n%s|r",
+                            string.format("%.1f", default),
+                            info.desc
                         )
-                    elseif info and info.default then
+                    else
                         return string.format(
                             "Default Value: |cFFFF0000%s|r",
-                            info.default
+                            string.format("%.1f", default)
                         )
                     end
                 end,
