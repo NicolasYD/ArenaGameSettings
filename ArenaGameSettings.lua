@@ -6,6 +6,10 @@ local ACR = LibStub("AceConfigRegistry-3.0")
 local LDB = LibStub("LibDataBroker-1.1")
 local LDBIcon = LibStub("LibDBIcon-1.0")
 
+-- Localize WoW API functions
+local GetCVar = C_CVar.GetCVar
+local SetCVar = C_CVar.SetCVar
+
 -- Table containing the CVars modified by this addon
 local cvarTable = {
     Sound_MasterVolume = {
