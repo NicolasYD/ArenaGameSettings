@@ -15,41 +15,41 @@ local SetCVar = C_CVar.SetCVar
 local cvarTable = {
     Sound_MasterVolume = {
         name = "Master Volume",
-        default = 1,
+        default = "1",
         order = 1
     },
     Sound_MusicVolume = {
         name = "Music",
-        default = 0.4,
-        recommended = 0,
+        default = "0.4",
+        recommended = "0",
         order = 2
     },
     Sound_SFXVolume = {
         name = "Effects",
-        default = 1,
-        recommended = 1,
+        default = "1",
+        recommended = "1",
         order = 3
     },
     Sound_AmbienceVolume = {
         name = "Ambience",
-        default = 0.6,
-        recommended = 0,
+        default = "0.6",
+        recommended = "0",
         order = 4
     },
     Sound_DialogVolume = {
         name = "Dialog",
-        default = 1,
-        recommended = 0,
+        default = "1",
+        recommended = "0",
         order = 5
     },
     Sound_GameplaySFX = {
         name = "Gameplay Sound Effects",
-        default = 1,
+        default = "1",
         order = 6
     },
     Sound_PingVolume = {
         name = "Ping Sounds",
-        default = 1,
+        default = "1",
         order = 7
     },
 }
@@ -65,7 +65,7 @@ local minimapDataObject = LDB:NewDataObject("ArenaGameSettings", {
     end,
     OnTooltipShow = function(tooltip)
         tooltip:AddLine("Arena Game Settings")
-        tooltip:AddLine("Left-click: Open options", 1, 1, 1)
+        tooltip:AddLine("Left-Click to open options.", 1, 1, 1)
     end,
 })
 
@@ -78,11 +78,15 @@ function ArenaGameSettings:UpdateSettings()
     if settings then
         if settings.arena and instanceType == "arena" then
             for cvar, _ in pairs(cvarTable) do
-                SetCVar(cvar, settings.arena[cvar])
+                if settings.arena[cvar] ~= GetCVar(cvar) then
+                    SetCVar(cvar, settings.arena[cvar])
+                end
             end
         elseif settings.outside and instanceType ~= "arena" then
             for cvar, _ in pairs(cvarTable) do
-                SetCVar(cvar, settings.outside[cvar])
+                if settings.outside[cvar] ~= GetCVar(cvar) then
+                    SetCVar(cvar, settings.outside[cvar])
+                end
             end
         end
     end
@@ -141,11 +145,11 @@ function ArenaGameSettings:CVAR_UPDATE(event, cvar, value)
     local settings = self.db.global
     local inInstance, instanceType = IsInInstance()
 
-    if settings then
-        if instanceType == "arena" then
-            settings.arena[cvar] = tonumber(GetCVar(cvar))
-        elseif instanceType ~= "arena" then
-            settings.outside[cvar] = tonumber(GetCVar(cvar))
+    if settings and cvarTable[cvar] then
+        if settings.arena and instanceType == "arena" then
+            settings.arena[cvar] = GetCVar(cvar)
+        elseif settings.outside and instanceType ~= "arena" then
+            settings.outside[cvar] = GetCVar(cvar)
         end
     end
 end
@@ -160,22 +164,24 @@ function ArenaGameSettings:OnInitialize()
             },
             showFramerate = true,
             arena = {
-                Sound_MasterVolume = tonumber(GetCVar("Sound_MasterVolume")),
-                Sound_MusicVolume = 0.00,
-                Sound_SFXVolume = 1.00,
-                Sound_AmbienceVolume = 0.00,
-                Sound_DialogVolume = 0.00,
-                Sound_GameplaySFX = 1.00,
-                Sound_PingVolume = tonumber(GetCVar("Sound_PingVolume")),
+                -- Sound Settings
+                Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
+                Sound_MusicVolume = "0",
+                Sound_SFXVolume = "1",
+                Sound_AmbienceVolume = "0",
+                Sound_DialogVolume = "0",
+                Sound_GameplaySFX = "1",
+                Sound_PingVolume = GetCVar("Sound_PingVolume"),
             },
             outside = {
-                Sound_MasterVolume = tonumber(GetCVar("Sound_MasterVolume")),
-                Sound_MusicVolume = tonumber(GetCVar("Sound_MusicVolume")),
-                Sound_SFXVolume = tonumber(GetCVar("Sound_SFXVolume")),
-                Sound_AmbienceVolume = tonumber(GetCVar("Sound_AmbienceVolume")),
-                Sound_DialogVolume = tonumber(GetCVar("Sound_DialogVolume")),
-                Sound_GameplaySFX = tonumber(GetCVar("Sound_GameplaySFX")),
-                Sound_PingVolume = tonumber(GetCVar("Sound_PingVolume")),
+                -- Sound Settings
+                Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
+                Sound_MusicVolume = GetCVar("Sound_MusicVolume"),
+                Sound_SFXVolume = GetCVar("Sound_SFXVolume"),
+                Sound_AmbienceVolume = GetCVar("Sound_AmbienceVolume"),
+                Sound_DialogVolume = GetCVar("Sound_DialogVolume"),
+                Sound_GameplaySFX = GetCVar("Sound_GameplaySFX"),
+                Sound_PingVolume = GetCVar("Sound_PingVolume"),
             },
         },
     })
@@ -310,16 +316,16 @@ function ArenaGameSettings:SetupOptions()
                 order = 1 + info.order,
                 get = function()
                     if group == "arena" then
-                        return self.db.global.arena[cvar]
+                        return tonumber(self.db.global.arena[cvar])
                     elseif group == "outside" then
-                        return self.db.global.outside[cvar]
+                        return tonumber(self.db.global.outside[cvar])
                     end
                 end,
                 set = function(_, value)
                     if group == "arena" then
-                        self.db.global.arena[cvar] = value
+                        self.db.global.arena[cvar] = tostring(value)
                     elseif group == "outside" then
-                        self.db.global.outside[cvar] = value
+                        self.db.global.outside[cvar] = tostring(value)
                     end
                     self:UpdateSettings()
                 end,
