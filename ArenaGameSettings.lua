@@ -22,11 +22,23 @@ local cvarTable = {
             type = "toggle",
             order = 1,
         },
+        cameraDistanceMaxZoomFactor = {
+            name = "Max Camera Distance",
+            desc = string.format("Recommended Value: |cFF00FF00%s|r\n\nControls how far the camera can zoom out.\nHigher values allow a wider field of view.", "2.6"),
+            type = "range",
+            min = 1,
+            max = 2.6,
+            step = 0.1,
+            order = 2,
+        },
         SpellQueueWindow = {
             name = "Spell Queue Window",
-            desc = string.format("Recommended Value: Your average |cFF00FF00%s|r", "latency + 100."),
+            desc = string.format("Recommended Value: Your average |cFF00FF00%s|r\n\nSets how early you can pre-activate/queue a spell/ability. (In Milliseconds)", "latency + 100."),
             type = "range",
-            order = 2,
+            min = 0,
+            max = tonumber(GetCVarDefault("SpellQueueWindow")),
+            step = 1,
+            order = 3,
         },
     },
 
@@ -35,40 +47,61 @@ local cvarTable = {
         Sound_MasterVolume = {
             name = "Master Volume",
             type = "range",
+            min = 0,
+            max = 1,
+            step = 0.1,
             order = 1,
         },
         Sound_MusicVolume = {
             name = "Music",
-            desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
+            desc = string.format("Recommended Value: |cFF00FF00%s|r", "0.0"),
             type = "range",
+            min = 0,
+            max = 1,
+            step = 0.1,
             order = 2,
         },
         Sound_SFXVolume = {
             name = "Effects",
-            desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 1),
+            desc = string.format("Recommended Value: |cFF00FF00%s|r", "1.0"),
             type = "range",
+            min = 0,
+            max = 1,
+            step = 0.1,
             order = 3,
         },
         Sound_AmbienceVolume = {
             name = "Ambience",
-            desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
+            desc = string.format("Recommended Value: |cFF00FF00%s|r", "0.0"),
             type = "range",
+            min = 0,
+            max = 1,
+            step = 0.1,
             order = 4,
         },
         Sound_DialogVolume = {
             name = "Dialog",
-            desc = string.format("Recommended Value: |cFF00FF00%.1f|r", 0),
+            desc = string.format("Recommended Value: |cFF00FF00%s|r", "0.0"),
             type = "range",
+            min = 0,
+            max = 1,
+            step = 0.1,
             order = 5,
         },
         Sound_GameplaySFX = {
             name = "Gameplay Sound Effects",
             type = "range",
+            min = 0,
+            max = 1,
+            step = 0.1,
             order = 6,
         },
         Sound_PingVolume = {
             name = "Ping Sounds",
             type = "range",
+            min = 0,
+            max = 1,
+            step = 0.1,
             order = 7,
         },
     },
@@ -227,13 +260,18 @@ function ArenaGameSettings:OnInitialize()
     -- Set up saved variables
     self.db = LibStub("AceDB-3.0"):New("ArenaGameSettingsDB", {
         global = {
+            -- Addon Settings
             minimap = {
                 hide = false,
                 minimapPos = 15,
             },
+
+            -- General Settings
             showFramerate = true,
             AutoPushSpellToActionBar = GetCVar("AutoPushSpellToActionBar"),
+            cameraDistanceMaxZoomFactor = "2.6",
             SpellQueueWindow = GetCVar("SpellQueueWindow"),
+
             arena = {
                 -- Audio Settings
                 Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
@@ -430,10 +468,12 @@ function ArenaGameSettings:SetupOptions()
                     return string.format(
                         "Default Value: |cFFFF0000%s|r\n%s",
                         string.format("%s", default),
-                        cvarTable.general["SpellQueueWindow"].desc
+                        info.desc
                     )
                 end,
-                min = 0, max = tonumber(GetCVarDefault(cvar)), step = 1,
+                min = info.min,
+                max = info.max,
+                step = info.step,
                 order = 2 + info.order,
                 get = function()
                     return tonumber(self.db.global[cvar])
@@ -473,7 +513,6 @@ function ArenaGameSettings:SetupOptions()
                         )
                     end
                 end,
-                width = "full",
                 order = 2 + info.order,
                 get = function()
                         return self.db.global[cvar] == "1"
@@ -511,7 +550,9 @@ function ArenaGameSettings:SetupOptions()
                             )
                         end
                     end,
-                    min = 0, max = 1, step = 0.01,
+                    min = info.min,
+                    max = info.max,
+                    step = info.step,
                     order = 1 + info.order,
                     get = function()
                         if group == "arena" then
@@ -577,58 +618,6 @@ function ArenaGameSettings:SetupOptions()
                     end,
                 }
             end
-
-            -- Toggles
-            --[[ if info.type == "toggle" then
-                options.args.graphics.args[group].args[cvar] = {
-                    type = "toggle",
-                    name = info.name,
-                    desc = function()
-
-                        -- Helper function to return text for CVar value
-                        local function translateDefaultValue(cvar_name)
-                            local default = GetCVarDefault(cvar_name)
-                            if default == "1" then
-                                return "Enabled"
-                            elseif default == "0" then
-                                return "Disabled"
-                            end
-                            return default
-                        end
-
-                        local default = translateDefaultValue(cvar)
-
-                        if group == "arena" and info.desc then
-                            return string.format(
-                                "Default: |cFFFF0000%s|r\n%s",
-                                default,
-                                info.desc
-                            )
-                        else
-                            return string.format(
-                                "Default: |cFFFF0000%s|r",
-                                default
-                            )
-                        end
-                    end,
-                    order = 1 + info.order,
-                    get = function()
-                        if group == "arena" then
-                            return self.db.global.arena[cvar] == "1"
-                        elseif group == "outside" then
-                            return self.db.global.outside[cvar] == "1"
-                        end
-                    end,
-                    set = function(_, value)
-                        if group == "arena" then
-                            self.db.global.arena[cvar] = value and "1" or "0"
-                        elseif group == "outside" then
-                            self.db.global.outside[cvar] = value and "1" or "0"
-                        end
-                        self:UpdateSettings()
-                    end,
-                }
-            end ]]
         end
     end
 

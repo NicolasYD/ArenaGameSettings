@@ -1,3 +1,6 @@
+v11.2.7.6
+- Added slider to adjust the maximum distance the camera can zoom out.
+
 v11.2.7.5
 - Added AutoPushSpellToActionBar to general settings.
 
