@@ -1,3 +1,6 @@
+v11.2.7.7
+- Fixed bug that caused options window to resize when a setting was changed.
+
 v11.2.7.6
 - Added slider to adjust the maximum distance the camera can zoom out.
 
