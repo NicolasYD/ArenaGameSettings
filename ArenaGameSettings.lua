@@ -230,24 +230,20 @@ function ArenaGameSettings:ShowFramerate()
     end
 end
 
--- Open/close options window
+-- Open/close options panel
 function ArenaGameSettings:OpenOptions()
     local openFrame = ACD.OpenFrames["ArenaGameSettings"]
 
     if openFrame and openFrame.frame and openFrame.frame:IsShown() then
-        -- Close options window if already open
+        -- Close options panel if already open
         ACD:Close("ArenaGameSettings")
-        return
     else
-        -- Open options window
+        -- Open options panel
         ACD:Open("ArenaGameSettings")
 
-        -- Set options window attributes
+        -- Set options panel frame settings
         local frame = ACD.OpenFrames["ArenaGameSettings"]
-        frame.frame:SetSize(500, 600)
         frame.frame:SetClampedToScreen(true)
-        frame.frame:SetMovable(true)
-        frame.frame:SetUserPlaced(true)
     end
 end
 
@@ -659,5 +655,6 @@ function ArenaGameSettings:SetupOptions()
     end
 
     AC:RegisterOptionsTable("ArenaGameSettings", options)
+    ACD:SetDefaultSize("ArenaGameSettings", 500, 600)
     ACD:AddToBlizOptions("ArenaGameSettings", "ArenaGameSettings")
 end
