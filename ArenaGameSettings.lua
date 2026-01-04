@@ -18,26 +18,37 @@ local cvarTable = {
     general = {
         AutoPushSpellToActionBar = {
             name = "Auto Push Spell To Action Bar",
-            desc = "\nDetermines if spells are automatically pushed to the Action Bar.",
+            rec = string.format("Recommended: |cFF00FF00%s|r", "Disabled"),
+            desc = "Determines if spells are automatically pushed to the Action Bar.",
             type = "toggle",
+            states = {
+                ["0"] = "Disabled",
+                ["1"] = "Enabled",
+            },
+            width = "full",
             order = 1,
         },
         cameraDistanceMaxZoomFactor = {
-            name = "Max Camera Distance",
-            desc = string.format("Recommended Value: |cFF00FF00%s|r\n\nControls how far the camera can zoom out.\nHigher values allow a wider field of view.", "2.6"),
+            name = "Camera Distance Max Zoom Factor",
+            rec = string.format("Recommended Value: |cFF00FF00%s|r", "2.6"),
+            desc = "Controls how far the camera can zoom out.\nHigher values allow a wider field of view.",
             type = "range",
             min = 1,
             max = 2.6,
             step = 0.1,
+            format = "%.1f",
+            width = "full",
             order = 2,
         },
         SpellQueueWindow = {
             name = "Spell Queue Window",
-            desc = string.format("Recommended Value: Your average |cFF00FF00%s|r\n\nSets how early you can pre-activate/queue a spell/ability. (In Milliseconds)", "latency + 100."),
+            rec = string.format("Recommended Value: Your average |cFF00FF00%s|r.", "latency + 100"),
+            desc = "Sets how early you can pre-activate/queue a spell/ability. (In Milliseconds)",
             type = "range",
             min = 0,
             max = tonumber(GetCVarDefault("SpellQueueWindow")),
             step = 1,
+            width = "full",
             order = 3,
         },
     },
@@ -46,62 +57,77 @@ local cvarTable = {
     audio = {
         Sound_MasterVolume = {
             name = "Master Volume",
+            desc = "Adjusts the master sound volume.",
             type = "range",
             min = 0,
             max = 1,
             step = 0.1,
+            width = "full",
             order = 1,
         },
         Sound_MusicVolume = {
             name = "Music",
-            desc = string.format("Recommended Value: |cFF00FF00%s|r", "0.0"),
+            rec = string.format("Recommended Value: |cFF00FF00%s|r", "0.0"),
+            desc = "Adjusts the background music volume.",
             type = "range",
             min = 0,
             max = 1,
             step = 0.1,
+            width = "full",
             order = 2,
         },
         Sound_SFXVolume = {
             name = "Effects",
-            desc = string.format("Recommended Value: |cFF00FF00%s|r", "1.0"),
+            rec = string.format("Recommended Value: |cFF00FF00%s|r", "1.0"),
+            desc = "Adjusts the sound effect volume.",
             type = "range",
             min = 0,
             max = 1,
             step = 0.1,
+            width = "full",
             order = 3,
         },
         Sound_AmbienceVolume = {
             name = "Ambience",
-            desc = string.format("Recommended Value: |cFF00FF00%s|r", "0.0"),
+            rec = string.format("Recommended Value: |cFF00FF00%s|r", "0.0"),
+            desc = "Adjusts the ambient sound volume.",
             type = "range",
             min = 0,
             max = 1,
             step = 0.1,
+            width = "full",
             order = 4,
         },
         Sound_DialogVolume = {
             name = "Dialog",
-            desc = string.format("Recommended Value: |cFF00FF00%s|r", "0.0"),
+            rec = string.format("Recommended Value: |cFF00FF00%s|r", "0.0"),
+            desc = "Adjusts the dialog sound volume.",
             type = "range",
             min = 0,
             max = 1,
             step = 0.1,
+            width = "full",
             order = 5,
         },
         Sound_GameplaySFX = {
             name = "Gameplay Sound Effects",
+            desc = "Adjusts the gameplay sound effects volume.",
             type = "range",
             min = 0,
             max = 1,
             step = 0.1,
+            format = "%.1f",
+            width = "full",
             order = 6,
         },
         Sound_PingVolume = {
             name = "Ping Sounds",
+            desc = "Adjusts ping sounds volume.",
             type = "range",
             min = 0,
             max = 1,
             step = 0.1,
+            width = "full",
             order = 7,
         },
     },
@@ -110,7 +136,8 @@ local cvarTable = {
     graphics = {
         graphicsComputeEffects = {
             name = "Compute Effects",
-            desc = string.format("Recommended: |cFF00FF00%s|r\n\nReduces load on CPU to increase FPS.", "Disabled"),
+            rec = string.format("Recommended: |cFF00FF00%s|r", "Disabled"),
+            desc = "Controls the quality of Compute-based effects such as Volumetric Fog and some particle effects.",
             type = "select",
             values = {
                 ["0"] = "Disabled",
@@ -119,16 +146,19 @@ local cvarTable = {
                 ["3"] = "High",
                 ["4"] = "Ultra"
             },
+            width = "full",
             order = 1,
         },
         graphicsProjectedTextures = {
             name = "Projected Textures",
-            desc = string.format("Recommended: |cFF00FF00%s|r\n\nMakes sure that important ground effects are visible.", "Enabled"),
+            rec = string.format("Recommended: |cFF00FF00%s|r", "Enabled"),
+            desc = "Enables the projecting of textures to the environment.",
             type = "select",
             values = {
                 ["0"] = "Disabled",
                 ["1"] = "Enabled",
             },
+            width = "full",
             order = 2,
         },
     },
@@ -200,13 +230,21 @@ function ArenaGameSettings:ShowFramerate()
     end
 end
 
--- Open options panel
+-- Open/close options window
 function ArenaGameSettings:OpenOptions()
-	ACD:Open("ArenaGameSettings")
+    local openFrame = ACD.OpenFrames["ArenaGameSettings"]
 
-	-- Clamp the options window to the screen
-    local frame = ACD.OpenFrames["ArenaGameSettings"]
-    if frame and frame.frame then
+    if openFrame and openFrame.frame and openFrame.frame:IsShown() then
+        -- Close options window if already open
+        ACD:Close("ArenaGameSettings")
+        return
+    else
+        -- Open options window
+        ACD:Open("ArenaGameSettings")
+
+        -- Set options window attributes
+        local frame = ACD.OpenFrames["ArenaGameSettings"]
+        frame.frame:SetSize(500, 600)
         frame.frame:SetClampedToScreen(true)
         frame.frame:SetMovable(true)
         frame.frame:SetUserPlaced(true)
@@ -347,6 +385,7 @@ function ArenaGameSettings:SetupOptions()
                         type = "toggle",
                         name = "Minimap Button",
                         desc = "Show the minimap button.",
+                        width = "full",
                         order = 2,
                         get = function()
                             return not self.db.global.minimap.hide
@@ -466,14 +505,16 @@ function ArenaGameSettings:SetupOptions()
                     local default = GetCVarDefault(cvar)
 
                     return string.format(
-                        "Default Value: |cFFFF0000%s|r\n%s",
-                        string.format("%s", default),
-                        info.desc
+                        "Default Value: |cFFFF0000%s|r%s\n\n%s",
+                        string.format(info.format or "%s", default),
+                        info.rec and ("\n" .. info.rec) or "",
+                        info.desc or ""
                     )
                 end,
                 min = info.min,
                 max = info.max,
                 step = info.step,
+                width = info.width or "",
                 order = 2 + info.order,
                 get = function()
                     return tonumber(self.db.global[cvar])
@@ -491,28 +532,18 @@ function ArenaGameSettings:SetupOptions()
                 type = "toggle",
                 name = info.name,
                 desc = function()
-
-                    -- Helper function to return text for CVar value
-                    local function translateDefaultValue(cvar_name)
-                        local default = GetCVarDefault(cvar_name)
-                        if default == "1" then
-                            return "Enabled"
-                        elseif default == "0" then
-                            return "Disabled"
-                        end
-                        return default
-                    end
-
-                    local default = translateDefaultValue(cvar)
+                    local default = GetCVarDefault(cvar)
 
                     if info.desc then
                         return string.format(
-                            "Default: |cFFFF0000%s|r\n%s",
-                            default,
-                            info.desc
+                            "Default: |cFFFF0000%s|r%s\n\n%s",
+                            info.states and info.states[default] or default,
+                            info.rec and ("\n" .. info.rec) or "",
+                            info.desc or ""
                         )
                     end
                 end,
+                width = info.width or "",
                 order = 2 + info.order,
                 get = function()
                         return self.db.global[cvar] == "1"
@@ -539,20 +570,23 @@ function ArenaGameSettings:SetupOptions()
 
                         if group == "arena" and info.desc then
                             return string.format(
-                                "Default Value: |cFFFF0000%s|r\n%s",
-                                string.format("%.1f", default),
-                                info.desc
+                                "Default Value: |cFFFF0000%s|r%s\n\n%s",
+                                string.format(info.format or "%s", default),
+                                info.rec and ("\n" .. info.rec) or "",
+                                info.desc or ""
                             )
                         else
                             return string.format(
-                                "Default Value: |cFFFF0000%s|r",
-                                string.format("%.1f", default)
+                                "Default Value: |cFFFF0000%s|r\n\n%s",
+                                string.format(info.format or "%s", default),
+                                info.desc or ""
                             )
                         end
                     end,
                     min = info.min,
                     max = info.max,
                     step = info.step,
+                    width = info.width or "",
                     order = 1 + info.order,
                     get = function()
                         if group == "arena" then
@@ -586,20 +620,23 @@ function ArenaGameSettings:SetupOptions()
                     desc = function ()
                         local default_value = GetCVarDefault(cvar)
                         local default_text = info.values[default_value]
-                        if group == "arena" and info.desc then
+                        if group == "arena" then
                             return string.format(
-                                "Default: |cFFFF0000%s|r\n%s",
+                                "Default: |cFFFF0000%s|r%s\n\n%s",
                                 default_text,
-                                info.desc
+                                info.rec and ("\n" .. info.rec) or "",
+                                info.desc or ""
                             )
                         else
                             return string.format(
-                                "Default: |cFFFF0000%s|r",
-                                default_text
+                                "Default: |cFFFF0000%s|r\n\n%s",
+                                default_text,
+                                info.desc or ""
                             )
                         end
                     end,
                     values = info.values,
+                    width = info.width or "",
                     order = 1 + info.order,
                     get = function()
                         if group == "arena" then
