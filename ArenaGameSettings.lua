@@ -185,44 +185,22 @@ function ArenaGameSettings:UpdateSettings()
     local settings = self.db.global
     local inInstance, instanceType = IsInInstance()
 
-    -- Helper function to apply settings for arena and outside
-    local function applySettings(category)
-        if settings and settings.arena and instanceType == "arena" then
-            for cvar, _ in pairs(cvarTable[category]) do
-                if settings.arena[cvar] ~= GetCVar(cvar) then
-                    SetCVar(cvar, settings.arena[cvar])
-                end
-            end
-        elseif settings and settings.outside and instanceType ~= "arena" then
-            for cvar, _ in pairs(cvarTable[category]) do
-                if settings.outside[cvar] ~= GetCVar(cvar) then
-                    SetCVar(cvar, settings.outside[cvar])
-                end
+    for category, cvars in pairs(cvarTable) do
+        for cvar, info in pairs(cvars) do
+            if category == "general" and settings and settings.general and settings.general[cvar] and settings.general[cvar] ~= GetCVar(cvar) then
+                SetCVar(cvar, settings.general[cvar])
+            elseif category ~= "general" and settings and settings[instanceType] and settings[instanceType][cvar] and settings[instanceType][cvar] ~= GetCVar(cvar) then
+                SetCVar(cvar, settings[instanceType][cvar])
             end
         end
     end
-
-    -- General Settings
-    if settings then
-        for cvar, _ in pairs(cvarTable.general) do
-            if settings[cvar] ~= GetCVar(cvar) then
-                SetCVar(cvar, settings[cvar])
-            end
-        end
-    end
-
-    -- Audio Settings
-    applySettings("audio")
-
-    -- Graphics Settings
-    applySettings("graphics")
 
     self:ShowFramerate()
 end
 
 -- Display the framerate
 function ArenaGameSettings:ShowFramerate()
-    local showFR = self.db.global.showFramerate
+    local showFR = self.db.global.general.showFramerate
     if showFR and FramerateFrame and FramerateFrame.Show and not FramerateFrame:IsShown() then
         FramerateFrame:Show()
     elseif not showFR and FramerateFrame and FramerateFrame.Hide and FramerateFrame:IsShown() then
@@ -275,17 +253,13 @@ function ArenaGameSettings:CVAR_UPDATE(event, cvar, value)
     local settings = self.db.global
     local inInstance, instanceType = IsInInstance()
 
-    -- General Settings
-    if settings and cvarTable.general[cvar] then
-        settings[cvar] = GetCVar(cvar)
-    end
-
-    -- Audio Settings
-    if settings and cvarTable.audio[cvar] then
-        if settings.arena and instanceType == "arena" then
-            settings.arena[cvar] = GetCVar(cvar)
-        elseif settings.outside and instanceType ~= "arena" then
-            settings.outside[cvar] = GetCVar(cvar)
+    for category, cvars in pairs(cvarTable) do
+        if cvars[cvar] then -- Check if the updated CVar exists in cvarTable to prevent other CVars to be written to the database
+            if category == "general" and settings and settings.general and settings.general[cvar] then
+                settings.general[cvar] = value
+            elseif category ~= "general" and settings and settings[instanceType] and settings[instanceType][cvar] then
+                settings[instanceType][cvar] = value
+            end
         end
     end
 end
@@ -294,17 +268,21 @@ function ArenaGameSettings:OnInitialize()
     -- Set up saved variables
     self.db = LibStub("AceDB-3.0"):New("ArenaGameSettingsDB", {
         global = {
-            -- Addon Settings
-            minimap = {
-                hide = false,
-                minimapPos = 15,
+            addon = {
+                -- Addon Settings
+                minimap = {
+                    hide = false,
+                    minimapPos = 15,
+                },
             },
 
-            -- General Settings
-            showFramerate = true,
-            AutoPushSpellToActionBar = GetCVar("AutoPushSpellToActionBar"),
-            cameraDistanceMaxZoomFactor = "2.6",
-            SpellQueueWindow = GetCVar("SpellQueueWindow"),
+            general = {
+                -- General Settings
+                showFramerate = true,
+                AutoPushSpellToActionBar = GetCVar("AutoPushSpellToActionBar"),
+                cameraDistanceMaxZoomFactor = "2.6",
+                SpellQueueWindow = GetCVar("SpellQueueWindow"),
+            },
 
             arena = {
                 -- Audio Settings
@@ -320,7 +298,23 @@ function ArenaGameSettings:OnInitialize()
                 graphicsComputeEffects = "0",
                 graphicsProjectedTextures = "1",
             },
-            outside = {
+
+            pvp = {
+                -- Audio Settings
+                Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
+                Sound_MusicVolume = GetCVar("Sound_MusicVolume"),
+                Sound_SFXVolume = GetCVar("Sound_SFXVolume"),
+                Sound_AmbienceVolume = GetCVar("Sound_AmbienceVolume"),
+                Sound_DialogVolume = GetCVar("Sound_DialogVolume"),
+                Sound_GameplaySFX = GetCVar("Sound_GameplaySFX"),
+                Sound_PingVolume = GetCVar("Sound_PingVolume"),
+
+                -- Graphics Settings
+                graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
+                graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
+            },
+
+            none = {
                 -- Audio Settings
                 Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
                 Sound_MusicVolume = GetCVar("Sound_MusicVolume"),
@@ -341,7 +335,7 @@ function ArenaGameSettings:OnInitialize()
     self:SetupOptions()
 
     -- Minimap button
-    LDBIcon:Register("ArenaGameSettings", minimapDataObject, self.db.global.minimap)
+    LDBIcon:Register("ArenaGameSettings", minimapDataObject, self.db.global.addon.minimap)
 
     -- Slash command
     self:RegisterChatCommand("ags", "SlashCommand")
@@ -384,10 +378,10 @@ function ArenaGameSettings:SetupOptions()
                         width = "full",
                         order = 2,
                         get = function()
-                            return not self.db.global.minimap.hide
+                            return not self.db.global.addon.minimap.hide
                         end,
                         set = function(_, value)
-                            self.db.global.minimap.hide = not value
+                            self.db.global.addon.minimap.hide = not value
                             if value then
                                 LDBIcon:Show("ArenaGameSettings")
                             else
@@ -413,10 +407,10 @@ function ArenaGameSettings:SetupOptions()
                         desc = "Show the framerate all the time.",
                         order = 2,
                         get = function()
-                            return self.db.global.showFramerate
+                            return self.db.global.general.showFramerate
                         end,
                         set = function(_, value)
-                            self.db.global.showFramerate = value
+                            self.db.global.general.showFramerate = value
                             self:ShowFramerate()
                         end,
                     },
@@ -440,10 +434,22 @@ function ArenaGameSettings:SetupOptions()
                             },
                         },
                     },
-                    outside = {
+                    pvp = {
+                        type = "group",
+                        name = "Battleground",
+                        order = 2,
+                        args = {
+                            header1 = {
+                                type = "header",
+                                name = "Audio Settings",
+                                order = 1,
+                            },
+                        },
+                    },
+                    none = {
                         type = "group",
                         name = "Outside",
-                        order = 2,
+                        order = 3,
                         args = {
                             header1 = {
                                 type = "header",
@@ -472,10 +478,22 @@ function ArenaGameSettings:SetupOptions()
                             },
                         },
                     },
-                    outside = {
+                    pvp = {
+                        type = "group",
+                        name = "Battleground",
+                        order = 2,
+                        args = {
+                            header1 = {
+                                type = "header",
+                                name = "Graphics Settings",
+                                order = 1,
+                            },
+                        },
+                    },
+                    none = {
                         type = "group",
                         name = "Outside",
-                        order = 2,
+                        order = 3,
                         args = {
                             header1 = {
                                 type = "header",
@@ -513,10 +531,10 @@ function ArenaGameSettings:SetupOptions()
                 width = info.width or "",
                 order = 2 + info.order,
                 get = function()
-                    return tonumber(self.db.global[cvar])
+                    return tonumber(self.db.global.general[cvar])
                 end,
                 set = function(_, value)
-                    self.db.global[cvar] = tostring(value)
+                    self.db.global.general[cvar] = tostring(value)
                     self:UpdateSettings()
                 end,
             }
@@ -542,10 +560,10 @@ function ArenaGameSettings:SetupOptions()
                 width = info.width or "",
                 order = 2 + info.order,
                 get = function()
-                        return self.db.global[cvar] == "1"
+                        return self.db.global.general[cvar] == "1"
                 end,
                 set = function(_, value)
-                    self.db.global[cvar] = value and "1" or "0"
+                    self.db.global.general[cvar] = value and "1" or "0"
                     self:UpdateSettings()
                 end,
             }
@@ -585,18 +603,10 @@ function ArenaGameSettings:SetupOptions()
                     width = info.width or "",
                     order = 1 + info.order,
                     get = function()
-                        if group == "arena" then
-                            return tonumber(self.db.global.arena[cvar])
-                        elseif group == "outside" then
-                            return tonumber(self.db.global.outside[cvar])
-                        end
+                        return tonumber(self.db.global[group][cvar])
                     end,
                     set = function(_, value)
-                        if group == "arena" then
-                            self.db.global.arena[cvar] = tostring(value)
-                        elseif group == "outside" then
-                            self.db.global.outside[cvar] = tostring(value)
-                        end
+                        self.db.global[group][cvar] = tostring(value)
                         self:UpdateSettings()
                     end,
                 }
@@ -635,18 +645,10 @@ function ArenaGameSettings:SetupOptions()
                     width = info.width or "",
                     order = 1 + info.order,
                     get = function()
-                        if group == "arena" then
-                            return self.db.global.arena[cvar]
-                        elseif group == "outside" then
-                            return self.db.global.outside[cvar]
-                        end
+                        return self.db.global[group][cvar]
                     end,
                     set = function(_, value)
-                        if group == "arena" then
-                            self.db.global.arena[cvar] = value
-                        elseif group == "outside" then
-                            self.db.global.outside[cvar] = value
-                        end
+                        self.db.global[group][cvar] = value
                         self:UpdateSettings()
                     end,
                 }
