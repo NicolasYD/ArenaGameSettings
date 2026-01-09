@@ -179,7 +179,6 @@ local minimapDataObject = LDB:NewDataObject("ArenaGameSettings", {
     end,
 })
 
-
 -- Function to update CVars based on instance type
 function ArenaGameSettings:UpdateSettings()
     local settings = self.db.global
@@ -190,7 +189,9 @@ function ArenaGameSettings:UpdateSettings()
             if category == "general" and settings and settings.general and settings.general[cvar] and settings.general[cvar] ~= GetCVar(cvar) then
                 SetCVar(cvar, settings.general[cvar])
             elseif category ~= "general" and settings and settings[instanceType] and settings[instanceType][cvar] and settings[instanceType][cvar] ~= GetCVar(cvar) then
-                SetCVar(cvar, settings[instanceType][cvar])
+                if settings.addon.pveOptions and (instanceType == "party" or instanceType == "raid") or not (instanceType == "party" or instanceType == "raid") then
+                    SetCVar(cvar, settings[instanceType][cvar])
+                end
             end
         end
     end
@@ -291,6 +292,7 @@ function ArenaGameSettings:OnInitialize()
                     hide = false,
                     minimapPos = 15,
                 },
+                pveOptions = false,
             },
 
             general = {
@@ -332,6 +334,36 @@ function ArenaGameSettings:OnInitialize()
             },
 
             none = {
+                -- Audio Settings
+                Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
+                Sound_MusicVolume = GetCVar("Sound_MusicVolume"),
+                Sound_SFXVolume = GetCVar("Sound_SFXVolume"),
+                Sound_AmbienceVolume = GetCVar("Sound_AmbienceVolume"),
+                Sound_DialogVolume = GetCVar("Sound_DialogVolume"),
+                Sound_GameplaySFX = GetCVar("Sound_GameplaySFX"),
+                Sound_PingVolume = GetCVar("Sound_PingVolume"),
+
+                -- Graphics Settings
+                graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
+                graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
+            },
+
+            party = {
+                -- Audio Settings
+                Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
+                Sound_MusicVolume = GetCVar("Sound_MusicVolume"),
+                Sound_SFXVolume = GetCVar("Sound_SFXVolume"),
+                Sound_AmbienceVolume = GetCVar("Sound_AmbienceVolume"),
+                Sound_DialogVolume = GetCVar("Sound_DialogVolume"),
+                Sound_GameplaySFX = GetCVar("Sound_GameplaySFX"),
+                Sound_PingVolume = GetCVar("Sound_PingVolume"),
+
+                -- Graphics Settings
+                graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
+                graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
+            },
+
+            raid = {
                 -- Audio Settings
                 Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
                 Sound_MusicVolume = GetCVar("Sound_MusicVolume"),
@@ -406,11 +438,25 @@ function ArenaGameSettings:SetupOptions()
                             end
                         end,
                     },
+                    pveOptions = {
+                        type = "toggle",
+                        name = "PVE Options",
+                        desc = "Enable separate settings for PVE instances.",
+                        width = "full",
+                        order = 3,
+                        get = function()
+                            return self.db.global.addon.pveOptions
+                        end,
+                        set = function(_, value)
+                            self.db.global.addon.pveOptions = value
+                        end,
+                    },
                     dangerZone = {
 						type = "group",
 						name = "|cffff0000Danger Zone|r",
 						inline = true,
-						order = 3,
+                        width = "full",
+						order = 4,
 						args = {
 							restoreDefaults = {
 								type = "execute",
@@ -492,6 +538,36 @@ function ArenaGameSettings:SetupOptions()
                             },
                         },
                     },
+                    party = {
+                        type = "group",
+                        name = "Dungeon",
+                        order = 4,
+                        hidden = function()
+                            return not self.db.global.addon.pveOptions
+                        end,
+                        args = {
+                            header1 = {
+                                type = "header",
+                                name = "Audio Settings",
+                                order = 1,
+                            },
+                        },
+                    },
+                    raid = {
+                        type = "group",
+                        name = "Raid",
+                        order = 5,
+                        hidden = function()
+                            return not self.db.global.addon.pveOptions
+                        end,
+                        args = {
+                            header1 = {
+                                type = "header",
+                                name = "Audio Settings",
+                                order = 1,
+                            },
+                        },
+                    },
                 },
             },
             graphics = {
@@ -528,6 +604,36 @@ function ArenaGameSettings:SetupOptions()
                         type = "group",
                         name = "Outside",
                         order = 3,
+                        args = {
+                            header1 = {
+                                type = "header",
+                                name = "Graphics Settings",
+                                order = 1,
+                            },
+                        },
+                    },
+                    party = {
+                        type = "group",
+                        name = "Dungeon",
+                        order = 4,
+                        hidden = function()
+                            return not self.db.global.addon.pveOptions
+                        end,
+                        args = {
+                            header1 = {
+                                type = "header",
+                                name = "Graphics Settings",
+                                order = 1,
+                            },
+                        },
+                    },
+                    raid = {
+                        type = "group",
+                        name = "Raid",
+                        order = 5,
+                        hidden = function()
+                            return not self.db.global.addon.pveOptions
+                        end,
                         args = {
                             header1 = {
                                 type = "header",
