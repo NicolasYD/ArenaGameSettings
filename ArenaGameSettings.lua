@@ -225,14 +225,31 @@ function ArenaGameSettings:OpenOptions()
     end
 end
 
+-- Delete saved variables and restore defaults
+function ArenaGameSettings:RestoreDefaults()
+    StaticPopupDialogs["AGS_RESTORE_DEFAULTS"] = {
+        text = "Are you sure you want to restore the default settings?\n\n|cffff0000WARNING:|r\n\nAll settings will be permanently lost.\nYour UI will be reloaded.",
+        button1 = "Yes",
+        button2 = "No",
+        OnAccept = function()
+            ArenaGameSettingsDB = nil
+		    ReloadUI()
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = false,
+    }
+
+    local popup = StaticPopup_Show("AGS_RESTORE_DEFAULTS")
+    popup:SetFrameStrata("TOOLTIP")
+end
+
 -- Handle ingame slash commands
 function ArenaGameSettings:SlashCommand(input)
     input = input:lower()
 
     if input == "reset" then
-        self.db:ResetDB()
-        ACR:NotifyChange("ArenaGameSettings")
-        print("ArenaGameSettings: settings reset.")
+        ArenaGameSettings:RestoreDefaults()
     else
         self:OpenOptions()
     end
@@ -389,6 +406,23 @@ function ArenaGameSettings:SetupOptions()
                             end
                         end,
                     },
+                    dangerZone = {
+						type = "group",
+						name = "|cffff0000Danger Zone|r",
+						inline = true,
+						order = 3,
+						args = {
+							restoreDefaults = {
+								type = "execute",
+								name = "Restore Defaults",
+								desc = "Delete all saved variables from this addon and start with an empty database.",
+								order = 1,
+								func = function()
+									ArenaGameSettings:RestoreDefaults()
+								end,
+							},
+						}
+					},
                 }
             },
             general = {
