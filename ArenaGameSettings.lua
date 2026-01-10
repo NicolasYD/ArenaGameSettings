@@ -1070,6 +1070,6 @@ function ArenaGameSettings:SetupOptions()
     end
 
     AC:RegisterOptionsTable("ArenaGameSettings", options)
-    ACD:SetDefaultSize("ArenaGameSettings", 500, 600)
+    ACD:SetDefaultSize("ArenaGameSettings", 500, 650)
     ACD:AddToBlizOptions("ArenaGameSettings", "ArenaGameSettings")
 end
