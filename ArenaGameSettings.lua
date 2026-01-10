@@ -608,6 +608,9 @@ function ArenaGameSettings:OnInitialize()
                 graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
                 graphicsGroundClutter = GetCVar("graphicsGroundClutter"),
             },
+
+            -- AddOn Variables
+            copyFrom = nil,
         },
     })
 
@@ -880,6 +883,93 @@ function ArenaGameSettings:SetupOptions()
         },
     }
 
+    -- Dropdown menu and button to copy settings between tabs
+    local function copySettings(instance, setting)
+        return {
+            copySelect = {
+                name = "",
+                desc = "",
+                type = "select",
+                values = function()
+                    local pveOptions = self.db.global.addon.pveOptions
+                    local t = {}
+
+                    t[""] = "< Clear Selection >"
+
+                    for groupKey, groupInfo in pairs(options.args[setting].args) do
+                        if groupInfo.type == "group" and groupKey ~= instance and pveOptions then
+                            t[groupKey] = groupInfo.name
+                        elseif groupInfo.type == "group" and groupKey ~= instance and not pveOptions and groupKey ~= "party" and groupKey ~= "raid" then
+                            t[groupKey] = groupInfo.name
+                        end
+                    end
+                    return t
+                end,
+                sorting = function()
+                    local pveOptions = self.db.global.addon.pveOptions
+                    local tmp = {}
+                    local order = {}
+
+                    order[1] = ""
+
+                    for groupKey, groupInfo in pairs(options.args[setting].args) do
+                        if groupInfo.type == "group" and groupKey ~= instance and pveOptions then
+                            table.insert(tmp, {
+                                key = groupKey,
+                                order = groupInfo.order or 0
+                            })
+                        elseif groupInfo.type == "group" and groupKey ~= instance and not pveOptions and groupKey ~= "party" and groupKey ~= "raid" then
+                            table.insert(tmp, {
+                                key = groupKey,
+                                order = groupInfo.order or 0
+                            })
+                        end
+                    end
+
+                    table.sort(tmp, function(a, b)
+                        return a.order < b.order
+                    end)
+
+                    for i, entry in ipairs(tmp) do
+                        order[#order + 1] = entry.key
+                    end
+
+                    return order
+                end,
+                get = function()
+                    return self.db.global.copyFrom
+                end,
+
+                set = function(_, value)
+                    self.db.global.copyFrom = value ~= "" and value or nil
+                end,
+                order = 2,
+            },
+            copyButton = {
+                type = "execute",
+                name = "Copy Settings",
+                desc = "Copy the settings from another tab.",
+                order = 3,
+                disabled = function()
+                    return not self.db.global.copyFrom
+                end,
+                func = function()
+                    local from = self.db.global.copyFrom
+                    local to = instance
+
+                    if not from or not self.db.global[from] then return end
+
+                    for cvar in pairs(cvarTable[setting]) do
+                        self.db.global[to][cvar] = self.db.global[from][cvar]
+                    end
+
+                    self.db.global.copyFrom = nil
+                    self:UpdateSettings()
+                end,
+            },
+        }
+    end
+
     -- General Settings
     for cvar, info in pairs(cvarTable.general) do
 
@@ -945,6 +1035,8 @@ function ArenaGameSettings:SetupOptions()
 
     -- Audio Settings
     for group, _ in pairs(options.args.audio.args) do
+        options.args.audio.args[group].args = copySettings(group, "audio")
+
         for cvar, info in pairs(cvarTable.audio) do
 
             -- Ranges
@@ -974,7 +1066,7 @@ function ArenaGameSettings:SetupOptions()
                     max = info.max,
                     step = info.step,
                     width = info.width or "",
-                    order = 1 + info.order,
+                    order = 3 + info.order,
                     get = function()
                         return tonumber(self.db.global[group][cvar])
                     end,
@@ -989,6 +1081,8 @@ function ArenaGameSettings:SetupOptions()
 
     -- Graphics Settings
     for group, _ in pairs(options.args.graphics.args) do
+        options.args.graphics.args[group].args = copySettings(group, "graphics")
+
         for cvar, info in pairs(cvarTable.graphics) do
 
             -- Ranges
@@ -1018,7 +1112,7 @@ function ArenaGameSettings:SetupOptions()
                     max = info.max,
                     step = info.step,
                     width = info.width or "",
-                    order = 1 + info.order,
+                    order = 3 + info.order,
                     get = function()
                         return tonumber(self.db.global[group][cvar] + (info.startingIndex and 1))
                     end,
@@ -1054,7 +1148,7 @@ function ArenaGameSettings:SetupOptions()
                     end,
                     values = info.values,
                     width = info.width or "",
-                    order = 1 + info.order,
+                    order = 3 + info.order,
                     get = function()
                         return self.db.global[group][cvar]
                     end,
@@ -1068,6 +1162,6 @@ function ArenaGameSettings:SetupOptions()
     end
 
     AC:RegisterOptionsTable("ArenaGameSettings", options)
-    ACD:SetDefaultSize("ArenaGameSettings", 500, 750)
+    ACD:SetDefaultSize("ArenaGameSettings", 500, 800)
     ACD:AddToBlizOptions("ArenaGameSettings", "ArenaGameSettings")
 end
