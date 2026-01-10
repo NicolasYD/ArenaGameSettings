@@ -237,6 +237,19 @@ local cvarTable = {
             width = "full",
             order = 7,
         },
+        graphicsTextureResolution = {
+            name = "Texture Resolution",
+            -- rec = string.format("Recommended: |cFF00FF00%s|r", "Low"),
+            desc = "Controls the level of all texture detail.",
+            type = "select",
+            values = {
+                ["0"] = "Low",
+                ["1"] = "Fair",
+                ["2"] = "High",
+            },
+            width = "full",
+            order = 8,
+        },
         graphicsProjectedTextures = {
             name = "Projected Textures",
             rec = string.format("Recommended: |cFF00FF00%s|r", "Enabled"),
@@ -409,6 +422,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsDepthEffects = GetCVar("graphicsDepthEffects"),
                 graphicsComputeEffects = "0",
                 graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
+                graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
                 graphicsProjectedTextures = "1",
             },
 
@@ -430,6 +444,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsDepthEffects = GetCVar("graphicsDepthEffects"),
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
+                graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
 
@@ -451,6 +466,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsDepthEffects = GetCVar("graphicsDepthEffects"),
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
+                graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
 
@@ -472,6 +488,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsDepthEffects = GetCVar("graphicsDepthEffects"),
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
+                graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
 
@@ -493,6 +510,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsDepthEffects = GetCVar("graphicsDepthEffects"),
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
+                graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
         },
