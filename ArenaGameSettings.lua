@@ -250,6 +250,19 @@ local cvarTable = {
             width = "full",
             order = 8,
         },
+        graphicsSpellDensity = {
+            name = "Spell Density",
+            -- rec = string.format("Recommended: |cFF00FF00%s|r", "Essential"),
+            desc = "Controls visibility of non-essential spells.",
+            type = "select",
+            values = {
+                ["0"] = "Essential",
+                ["1"] = "Reduced",
+                ["2"] = "Everything",
+            },
+            width = "full",
+            order = 9,
+        },
         graphicsProjectedTextures = {
             name = "Projected Textures",
             rec = string.format("Recommended: |cFF00FF00%s|r", "Enabled"),
@@ -423,6 +436,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsComputeEffects = "0",
                 graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
                 graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
+                graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = "1",
             },
 
@@ -445,6 +459,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
                 graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
+                graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
 
@@ -467,6 +482,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
                 graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
+                graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
 
@@ -489,6 +505,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
                 graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
+                graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
 
@@ -511,6 +528,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
                 graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
+                graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
         },
