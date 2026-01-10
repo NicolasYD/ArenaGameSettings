@@ -299,6 +299,18 @@ local cvarTable = {
             width = "full",
             order = 12,
         },
+        graphicsGroundClutter = {
+            name = "Ground Clutter",
+            -- rec = string.format("Recommended: |cFF00FF00%s|r", "1"),
+            desc = "Controls the density and distance at which ground clutter items, like grass and foliage, are placed.",
+            type = "range",
+            min = 1,
+            max = 10,
+            step = 1,
+            startingIndex = 0,
+            width = "full",
+            order = 13,
+        },
     },
 }
 
@@ -464,6 +476,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsProjectedTextures = "1",
                 graphicsViewDistance = GetCVar("graphicsViewDistance"),
                 graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
+                graphicsGroundClutter = GetCVar("graphicsGroundClutter"),
             },
 
             pvp = {
@@ -489,6 +502,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
                 graphicsViewDistance = GetCVar("graphicsViewDistance"),
                 graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
+                graphicsGroundClutter = GetCVar("graphicsGroundClutter"),
             },
 
             none = {
@@ -514,6 +528,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
                 graphicsViewDistance = GetCVar("graphicsViewDistance"),
                 graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
+                graphicsGroundClutter = GetCVar("graphicsGroundClutter"),
             },
 
             party = {
@@ -539,6 +554,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
                 graphicsViewDistance = GetCVar("graphicsViewDistance"),
                 graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
+                graphicsGroundClutter = GetCVar("graphicsGroundClutter"),
             },
 
             raid = {
@@ -564,6 +580,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
                 graphicsViewDistance = GetCVar("graphicsViewDistance"),
                 graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
+                graphicsGroundClutter = GetCVar("graphicsGroundClutter"),
             },
         },
     })
@@ -1023,6 +1040,6 @@ function ArenaGameSettings:SetupOptions()
     end
 
     AC:RegisterOptionsTable("ArenaGameSettings", options)
-    ACD:SetDefaultSize("ArenaGameSettings", 500, 600)
+    ACD:SetDefaultSize("ArenaGameSettings", 500, 750)
     ACD:AddToBlizOptions("ArenaGameSettings", "ArenaGameSettings")
 end
