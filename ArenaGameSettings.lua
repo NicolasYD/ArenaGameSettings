@@ -742,37 +742,19 @@ function ArenaGameSettings:SetupOptions()
                         type = "group",
                         name = "Arena",
                         order = 1,
-                        args = {
-                            header1 = {
-                                type = "header",
-                                name = "Audio Settings",
-                                order = 1,
-                            },
-                        },
+                        args = {},
                     },
                     pvp = {
                         type = "group",
                         name = "Battleground",
                         order = 2,
-                        args = {
-                            header1 = {
-                                type = "header",
-                                name = "Audio Settings",
-                                order = 1,
-                            },
-                        },
+                        args = {},
                     },
                     none = {
                         type = "group",
                         name = "Outside",
                         order = 3,
-                        args = {
-                            header1 = {
-                                type = "header",
-                                name = "Audio Settings",
-                                order = 1,
-                            },
-                        },
+                        args = {},
                     },
                     party = {
                         type = "group",
@@ -781,13 +763,7 @@ function ArenaGameSettings:SetupOptions()
                         hidden = function()
                             return not self.db.global.addon.pveOptions
                         end,
-                        args = {
-                            header1 = {
-                                type = "header",
-                                name = "Audio Settings",
-                                order = 1,
-                            },
-                        },
+                        args = {},
                     },
                     raid = {
                         type = "group",
@@ -796,13 +772,7 @@ function ArenaGameSettings:SetupOptions()
                         hidden = function()
                             return not self.db.global.addon.pveOptions
                         end,
-                        args = {
-                            header1 = {
-                                type = "header",
-                                name = "Audio Settings",
-                                order = 1,
-                            },
-                        },
+                        args = {},
                     },
                 },
             },
@@ -816,37 +786,19 @@ function ArenaGameSettings:SetupOptions()
                         type = "group",
                         name = "Arena",
                         order = 1,
-                        args = {
-                            header1 = {
-                                type = "header",
-                                name = "Graphics Settings",
-                                order = 1,
-                            },
-                        },
+                        args = {},
                     },
                     pvp = {
                         type = "group",
                         name = "Battleground",
                         order = 2,
-                        args = {
-                            header1 = {
-                                type = "header",
-                                name = "Graphics Settings",
-                                order = 1,
-                            },
-                        },
+                        args = {},
                     },
                     none = {
                         type = "group",
                         name = "Outside",
                         order = 3,
-                        args = {
-                            header1 = {
-                                type = "header",
-                                name = "Graphics Settings",
-                                order = 1,
-                            },
-                        },
+                        args = {},
                     },
                     party = {
                         type = "group",
@@ -855,13 +807,7 @@ function ArenaGameSettings:SetupOptions()
                         hidden = function()
                             return not self.db.global.addon.pveOptions
                         end,
-                        args = {
-                            header1 = {
-                                type = "header",
-                                name = "Graphics Settings",
-                                order = 1,
-                            },
-                        },
+                        args = {},
                     },
                     raid = {
                         type = "group",
@@ -870,13 +816,7 @@ function ArenaGameSettings:SetupOptions()
                         hidden = function()
                             return not self.db.global.addon.pveOptions
                         end,
-                        args = {
-                            header1 = {
-                                type = "header",
-                                name = "Graphics Settings",
-                                order = 1,
-                            },
-                        },
+                        args = {},
                     },
                 },
             },
@@ -885,7 +825,7 @@ function ArenaGameSettings:SetupOptions()
 
     -- Dropdown menu and button to copy settings between tabs
     local function copySettings(instance, setting)
-        return {
+        local copyElements = {
             copySelect = {
                 name = "",
                 desc = "",
@@ -894,7 +834,7 @@ function ArenaGameSettings:SetupOptions()
                     local pveOptions = self.db.global.addon.pveOptions
                     local t = {}
 
-                    t[""] = "< Clear Selection >"
+                    t[""] = "<Clear Selection>"
 
                     for groupKey, groupInfo in pairs(options.args[setting].args) do
                         if groupInfo.type == "group" and groupKey ~= instance and pveOptions then
@@ -936,6 +876,7 @@ function ArenaGameSettings:SetupOptions()
 
                     return order
                 end,
+                order = 1,
                 get = function()
                     return self.db.global.copyFrom
                 end,
@@ -943,13 +884,12 @@ function ArenaGameSettings:SetupOptions()
                 set = function(_, value)
                     self.db.global.copyFrom = value ~= "" and value or nil
                 end,
-                order = 2,
             },
             copyButton = {
                 type = "execute",
                 name = "Copy Settings",
                 desc = "Copy the settings from another tab.",
-                order = 3,
+                order = 2,
                 disabled = function()
                     return not self.db.global.copyFrom
                 end,
@@ -967,157 +907,56 @@ function ArenaGameSettings:SetupOptions()
                     self:UpdateSettings()
                 end,
             },
+            spacer1 = {
+                type = "header",
+                name = "",
+                width = "full",
+                order = 3,
+            },
         }
+
+        return copyElements
     end
 
-    -- General Settings
-    for cvar, info in pairs(cvarTable.general) do
+    -- GUI items to modify the settings
+    local function addOptionElements(instance, setting, header)
+        local elements = {}
 
-        -- Ranges
-        if info.type == "range" then
-            options.args.general.args[cvar] = {
-                type = "range",
-                name = info.name,
-                desc = function()
-                    local default = GetCVarDefault(cvar)
-
-                    return string.format(
-                        "Default Value: |cFFFF0000%s|r%s\n\n%s",
-                        string.format(info.format or "%s", default),
-                        info.rec and ("\n" .. info.rec) or "",
-                        info.desc or ""
-                    )
-                end,
-                min = info.min,
-                max = info.max,
-                step = info.step,
-                width = info.width or "",
-                order = 2 + info.order,
-                get = function()
-                    return tonumber(self.db.global.general[cvar])
-                end,
-                set = function(_, value)
-                    self.db.global.general[cvar] = tostring(value)
-                    self:UpdateSettings()
-                end,
+        if header then
+            elements["header1"] = {
+                type = "header",
+                name = string.format("%s Settings", header),
+                order = 4,
             }
         end
 
-        -- Toggles
-        if info.type == "toggle" then
-            options.args.general.args[cvar] = {
-                type = "toggle",
-                name = info.name,
-                desc = function()
-                    local default = GetCVarDefault(cvar)
+        for cvar, info in pairs(cvarTable[setting]) do
 
-                    if info.desc then
+            -- Ranges
+            if info.type == "range" then
+                elements[cvar] = {
+                    type = "range",
+                    name = info.name,
+                    desc = function()
+                        local default = GetCVarDefault(cvar)
+
                         return string.format(
-                            "Default: |cFFFF0000%s|r%s\n\n%s",
-                            info.states and info.states[default] or default,
+                            "Default Value: |cFFFF0000%s|r%s\n\n%s",
+                            string.format(info.format or "%s", default),
                             info.rec and ("\n" .. info.rec) or "",
                             info.desc or ""
                         )
-                    end
-                end,
-                width = info.width or "",
-                order = 2 + info.order,
-                get = function()
-                        return self.db.global.general[cvar] == "1"
-                end,
-                set = function(_, value)
-                    self.db.global.general[cvar] = value and "1" or "0"
-                    self:UpdateSettings()
-                end,
-            }
-        end
-    end
-
-    -- Audio Settings
-    for group, _ in pairs(options.args.audio.args) do
-        options.args.audio.args[group].args = copySettings(group, "audio")
-
-        for cvar, info in pairs(cvarTable.audio) do
-
-            -- Ranges
-            if info.type == "range" then
-                options.args.audio.args[group].args[cvar] = {
-                    type = "range",
-                    name = info.name,
-                    desc = function()
-                        local default = GetCVarDefault(cvar)
-
-                        if group == "arena" and info.desc then
-                            return string.format(
-                                "Default Value: |cFFFF0000%s|r%s\n\n%s",
-                                string.format(info.format or "%s", default),
-                                info.rec and ("\n" .. info.rec) or "",
-                                info.desc or ""
-                            )
-                        else
-                            return string.format(
-                                "Default Value: |cFFFF0000%s|r\n\n%s",
-                                string.format(info.format or "%s", default),
-                                info.desc or ""
-                            )
-                        end
                     end,
                     min = info.min,
                     max = info.max,
                     step = info.step,
                     width = info.width or "",
-                    order = 3 + info.order,
+                    order = 4 + info.order,
                     get = function()
-                        return tonumber(self.db.global[group][cvar])
+                        return tonumber(self.db.global[instance][cvar])
                     end,
                     set = function(_, value)
-                        self.db.global[group][cvar] = tostring(value)
-                        self:UpdateSettings()
-                    end,
-                }
-            end
-        end
-    end
-
-    -- Graphics Settings
-    for group, _ in pairs(options.args.graphics.args) do
-        options.args.graphics.args[group].args = copySettings(group, "graphics")
-
-        for cvar, info in pairs(cvarTable.graphics) do
-
-            -- Ranges
-            if info.type == "range" then
-                options.args.graphics.args[group].args[cvar] = {
-                    type = "range",
-                    name = info.name,
-                    desc = function()
-                        local default = GetCVarDefault(cvar)
-
-                        if group == "arena" and info.desc then
-                            return string.format(
-                                "Default Value: |cFFFF0000%s|r%s\n\n%s",
-                                string.format(info.format or "%s", default + (info.startingIndex and 1)),
-                                info.rec and ("\n" .. info.rec) or "",
-                                info.desc or ""
-                            )
-                        else
-                            return string.format(
-                                "Default Value: |cFFFF0000%s|r\n\n%s",
-                                string.format(info.format or "%s", default + (info.startingIndex and 1)),
-                                info.desc or ""
-                            )
-                        end
-                    end,
-                    min = info.min,
-                    max = info.max,
-                    step = info.step,
-                    width = info.width or "",
-                    order = 3 + info.order,
-                    get = function()
-                        return tonumber(self.db.global[group][cvar] + (info.startingIndex and 1))
-                    end,
-                    set = function(_, value)
-                        self.db.global[group][cvar] = tostring(value - (info.startingIndex and 1))
+                        self.db.global[instance][cvar] = tostring(value)
                         self:UpdateSettings()
                     end,
                 }
@@ -1125,13 +964,13 @@ function ArenaGameSettings:SetupOptions()
 
             -- Selects
             if info.type == "select" then
-                options.args.graphics.args[group].args[cvar] = {
+                elements[cvar] = {
                     type = "select",
                     name = info.name,
                     desc = function ()
                         local default_value = GetCVarDefault(cvar)
                         local default_text = info.values[default_value]
-                        if group == "arena" then
+                        if instance == "arena" then
                             return string.format(
                                 "Default: |cFFFF0000%s|r%s\n\n%s",
                                 default_text,
@@ -1148,20 +987,80 @@ function ArenaGameSettings:SetupOptions()
                     end,
                     values = info.values,
                     width = info.width or "",
-                    order = 3 + info.order,
+                    order = 4 + info.order,
                     get = function()
-                        return self.db.global[group][cvar]
+                        return self.db.global[instance][cvar]
                     end,
                     set = function(_, value)
-                        self.db.global[group][cvar] = value
+                        self.db.global[instance][cvar] = value
+                        self:UpdateSettings()
+                    end,
+                }
+            end
+
+            -- Toggles
+            if info.type == "toggle" then
+                elements[cvar] = {
+                    type = "toggle",
+                    name = info.name,
+                    desc = function()
+                        local default = GetCVarDefault(cvar)
+
+                        if info.desc then
+                            return string.format(
+                                "Default: |cFFFF0000%s|r%s\n\n%s",
+                                info.states and info.states[default] or default,
+                                info.rec and ("\n" .. info.rec) or "",
+                                info.desc or ""
+                            )
+                        end
+                    end,
+                    width = info.width or "",
+                    order = 4 + info.order,
+                    get = function()
+                            return self.db.global[instance][cvar] == "1"
+                    end,
+                    set = function(_, value)
+                        self.db.global[instance][cvar] = value and "1" or "0"
                         self:UpdateSettings()
                     end,
                 }
             end
         end
+
+        return elements
+    end
+
+    -- General Settings
+    options.args.general.args = addOptionElements("general", "general")
+
+    -- Audio Settings
+    for group, _ in pairs(options.args.audio.args) do
+        -- Merge copySettings()
+        for key, value in pairs(copySettings(group, "audio")) do
+            options.args.audio.args[group].args[key] = value
+        end
+
+        -- Merge addOptionElements()
+        for key, value in pairs(addOptionElements(group, "audio", "Audio")) do
+            options.args.audio.args[group].args[key] = value
+        end
+    end
+
+    -- Graphics Settings
+    for group, _ in pairs(options.args.graphics.args) do
+        -- Merge copySettings()
+        for key, value in pairs(copySettings(group, "graphics")) do
+            options.args.graphics.args[group].args[key] = value
+        end
+
+        -- Merge addOptionElements()
+        for key, value in pairs(addOptionElements(group, "graphics", "Graphics")) do
+            options.args.graphics.args[group].args[key] = value
+        end
     end
 
     AC:RegisterOptionsTable("ArenaGameSettings", options)
-    ACD:SetDefaultSize("ArenaGameSettings", 500, 800)
+    ACD:SetDefaultSize("ArenaGameSettings", 500, 600)
     ACD:AddToBlizOptions("ArenaGameSettings", "ArenaGameSettings")
 end
