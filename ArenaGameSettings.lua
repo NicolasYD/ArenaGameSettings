@@ -136,7 +136,7 @@ local cvarTable = {
     graphics = {
         graphicsShadowQuality = {
             name = "Shadow Quality",
-            rec = string.format("Recommended: |cFF00FF00%s|r", "Fair"),
+            -- rec = string.format("Recommended: |cFF00FF00%s|r", "Fair"),
             desc = "Controls both the method and quality of shadows.",
             type = "select",
             values = {
@@ -211,7 +211,7 @@ local cvarTable = {
         },
         graphicsComputeEffects = {
             name = "Compute Effects",
-            rec = string.format("Recommended: |cFF00FF00%s|r", "Disabled"),
+            -- rec = string.format("Recommended: |cFF00FF00%s|r", "Disabled"),
             desc = "Controls the quality of Compute-based effects such as Volumetric Fog and some particle effects.",
             type = "select",
             values = {
@@ -464,12 +464,12 @@ function ArenaGameSettings:OnInitialize()
                 Sound_PingVolume = GetCVar("Sound_PingVolume"),
 
                 -- Graphics Settings
-                graphicsShadowQuality = "1",
+                graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
                 graphicsLiquidDetail = GetCVar("graphicsLiquidDetail"),
                 graphicsParticleDensity = GetCVar("graphicsParticleDensity"),
                 graphicsSSAO = GetCVar("graphicsSSAO"),
                 graphicsDepthEffects = GetCVar("graphicsDepthEffects"),
-                graphicsComputeEffects = "0",
+                graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
                 graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
                 graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
