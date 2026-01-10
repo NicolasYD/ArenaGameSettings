@@ -277,6 +277,7 @@ local cvarTable = {
         },
         graphicsViewDistance = {
             name = "View Distance",
+            -- rec = string.format("Recommended: |cFF00FF00%s|r", "1"),
             desc = "View distance controls how far you can see.",
             type = "range",
             min = 1,
@@ -285,6 +286,18 @@ local cvarTable = {
             startingIndex = 0,
             width = "full",
             order = 11,
+        },
+        graphicsEnvironmentDetail = {
+            name = "Environment Detail",
+            -- rec = string.format("Recommended: |cFF00FF00%s|r", "1"),
+            desc = "Controls how far you can see objects.",
+            type = "range",
+            min = 1,
+            max = 10,
+            step = 1,
+            startingIndex = 0,
+            width = "full",
+            order = 12,
         },
     },
 }
@@ -450,6 +463,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = "1",
                 graphicsViewDistance = GetCVar("graphicsViewDistance"),
+                graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
             },
 
             pvp = {
@@ -474,6 +488,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
                 graphicsViewDistance = GetCVar("graphicsViewDistance"),
+                graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
             },
 
             none = {
@@ -498,6 +513,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
                 graphicsViewDistance = GetCVar("graphicsViewDistance"),
+                graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
             },
 
             party = {
@@ -522,6 +538,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
                 graphicsViewDistance = GetCVar("graphicsViewDistance"),
+                graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
             },
 
             raid = {
@@ -546,6 +563,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
                 graphicsViewDistance = GetCVar("graphicsViewDistance"),
+                graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
             },
         },
     })
