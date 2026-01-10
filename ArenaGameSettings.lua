@@ -332,15 +332,32 @@ local minimapDataObject = LDB:NewDataObject("ArenaGameSettings", {
 -- Function to update CVars based on instance type
 function ArenaGameSettings:UpdateSettings()
     local settings = self.db.global
+    local pveOptions = self.db.global.addon.pveOptions
     local inInstance, instanceType = IsInInstance()
 
     for category, cvars in pairs(cvarTable) do
-        for cvar, info in pairs(cvars) do
-            if category == "general" and settings and settings.general and settings.general[cvar] and settings.general[cvar] ~= GetCVar(cvar) then
-                SetCVar(cvar, settings.general[cvar])
-            elseif category ~= "general" and settings and settings[instanceType] and settings[instanceType][cvar] and settings[instanceType][cvar] ~= GetCVar(cvar) then
-                if settings.addon.pveOptions and (instanceType == "party" or instanceType == "raid") or not (instanceType == "party" or instanceType == "raid") then
-                    SetCVar(cvar, settings[instanceType][cvar])
+        for cvar in pairs(cvars) do
+            local targetValue
+
+            if category == "general" then
+                targetValue = settings and settings.general and settings.general[cvar]
+            else
+                if pveOptions then
+                    targetValue = settings and settings[instanceType] and settings[instanceType][cvar]
+                else
+                    if instanceType == "party" or instanceType == "raid" then
+                        targetValue = settings and settings.none and settings.none[cvar]
+                    else
+                        targetValue = settings and settings[instanceType] and settings[instanceType][cvar]
+                    end
+                end
+            end
+            if targetValue ~= nil then
+                local desired = tostring(targetValue)
+                local current = GetCVar(cvar)
+
+                if desired ~= current then
+                    SetCVar(cvar, desired)
                 end
             end
         end
@@ -419,14 +436,23 @@ end
 -- Event handler when a CVar is changed
 function ArenaGameSettings:CVAR_UPDATE(event, cvar, value)
     local settings = self.db.global
+    local pveOptions = self.db.global.addon.pveOptions
     local inInstance, instanceType = IsInInstance()
 
     for category, cvars in pairs(cvarTable) do
-        if cvars[cvar] then -- Check if the updated CVar exists in cvarTable to prevent other CVars to be written to the database
-            if category == "general" and settings and settings.general and settings.general[cvar] then
+        if cvars[cvar] and settings then -- Check if the updated CVar exists in cvarTable to prevent other CVars to be written to the database
+            if category == "general" and settings.general then
                 settings.general[cvar] = value
-            elseif category ~= "general" and settings and settings[instanceType] and settings[instanceType][cvar] then
-                settings[instanceType][cvar] = value
+            else
+                if pveOptions and settings[instanceType] then
+                    settings[instanceType][cvar] = value
+                else
+                    if (instanceType == "party" or instanceType == "raid") and settings.none then
+                        settings.none[cvar] = value
+                    elseif settings[instanceType] then
+                        settings[instanceType][cvar] = value
+                    end
+                end
             end
         end
     end
@@ -654,6 +680,7 @@ function ArenaGameSettings:SetupOptions()
                         end,
                         set = function(_, value)
                             self.db.global.addon.pveOptions = value
+                            ArenaGameSettings:UpdateSettings()
                         end,
                     },
                     dangerZone = {
@@ -667,7 +694,8 @@ function ArenaGameSettings:SetupOptions()
 								type = "execute",
 								name = "Restore Defaults",
 								desc = "Delete all saved variables from this addon and start with an empty database.",
-								order = 1,
+								width = "full",
+                                order = 1,
 								func = function()
 									ArenaGameSettings:RestoreDefaults()
 								end,
