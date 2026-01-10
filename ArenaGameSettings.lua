@@ -164,6 +164,22 @@ local cvarTable = {
             width = "full",
             order = 2,
         },
+        graphicsParticleDensity = {
+            name = "Particle Density",
+            -- rec = string.format("Recommended: |cFF00FF00%s|r", "Low"),
+            desc = "Controls the number of particles used in effects caused by spells, fires etc.",
+            type = "select",
+            values = {
+                ["0"] = "Disabled",
+                ["1"] = "Low",
+                ["2"] = "Fair",
+                ["3"] = "Good",
+                ["4"] = "High",
+                ["5"] = "Ultra",
+            },
+            width = "full",
+            order = 3,
+        },
         graphicsComputeEffects = {
             name = "Compute Effects",
             rec = string.format("Recommended: |cFF00FF00%s|r", "Disabled"),
@@ -346,6 +362,7 @@ function ArenaGameSettings:OnInitialize()
                 -- Graphics Settings
                 graphicsShadowQuality = "1",
                 graphicsLiquidDetail = GetCVar("graphicsLiquidDetail"),
+                graphicsParticleDensity = GetCVar("graphicsParticleDensity"),
                 graphicsComputeEffects = "0",
                 graphicsProjectedTextures = "1",
             },
@@ -363,6 +380,7 @@ function ArenaGameSettings:OnInitialize()
                 -- Graphics Settings
                 graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
                 graphicsLiquidDetail = GetCVar("graphicsLiquidDetail"),
+                graphicsParticleDensity = GetCVar("graphicsParticleDensity"),
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
@@ -380,6 +398,7 @@ function ArenaGameSettings:OnInitialize()
                 -- Graphics Settings
                 graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
                 graphicsLiquidDetail = GetCVar("graphicsLiquidDetail"),
+                graphicsParticleDensity = GetCVar("graphicsParticleDensity"),
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
@@ -397,6 +416,7 @@ function ArenaGameSettings:OnInitialize()
                 -- Graphics Settings
                 graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
                 graphicsLiquidDetail = GetCVar("graphicsLiquidDetail"),
+                graphicsParticleDensity = GetCVar("graphicsParticleDensity"),
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
@@ -414,6 +434,7 @@ function ArenaGameSettings:OnInitialize()
                 -- Graphics Settings
                 graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
                 graphicsLiquidDetail = GetCVar("graphicsLiquidDetail"),
+                graphicsParticleDensity = GetCVar("graphicsParticleDensity"),
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
