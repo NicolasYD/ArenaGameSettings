@@ -275,6 +275,17 @@ local cvarTable = {
             width = "full",
             order = 10,
         },
+        graphicsViewDistance = {
+            name = "View Distance",
+            desc = "View distance controls how far you can see.",
+            type = "range",
+            min = 1,
+            max = 10,
+            step = 1,
+            startingIndex = 0,
+            width = "full",
+            order = 11,
+        },
     },
 }
 
@@ -438,6 +449,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
                 graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = "1",
+                graphicsViewDistance = GetCVar("graphicsViewDistance"),
             },
 
             pvp = {
@@ -461,6 +473,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
                 graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
+                graphicsViewDistance = GetCVar("graphicsViewDistance"),
             },
 
             none = {
@@ -484,6 +497,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
                 graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
+                graphicsViewDistance = GetCVar("graphicsViewDistance"),
             },
 
             party = {
@@ -507,6 +521,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
                 graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
+                graphicsViewDistance = GetCVar("graphicsViewDistance"),
             },
 
             raid = {
@@ -530,6 +545,7 @@ function ArenaGameSettings:OnInitialize()
                 graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
                 graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
+                graphicsViewDistance = GetCVar("graphicsViewDistance"),
             },
         },
     })
@@ -911,6 +927,44 @@ function ArenaGameSettings:SetupOptions()
     -- Graphics Settings
     for group, _ in pairs(options.args.graphics.args) do
         for cvar, info in pairs(cvarTable.graphics) do
+
+            -- Ranges
+            if info.type == "range" then
+                options.args.graphics.args[group].args[cvar] = {
+                    type = "range",
+                    name = info.name,
+                    desc = function()
+                        local default = GetCVarDefault(cvar)
+
+                        if group == "arena" and info.desc then
+                            return string.format(
+                                "Default Value: |cFFFF0000%s|r%s\n\n%s",
+                                string.format(info.format or "%s", default + (info.startingIndex and 1)),
+                                info.rec and ("\n" .. info.rec) or "",
+                                info.desc or ""
+                            )
+                        else
+                            return string.format(
+                                "Default Value: |cFFFF0000%s|r\n\n%s",
+                                string.format(info.format or "%s", default + (info.startingIndex and 1)),
+                                info.desc or ""
+                            )
+                        end
+                    end,
+                    min = info.min,
+                    max = info.max,
+                    step = info.step,
+                    width = info.width or "",
+                    order = 1 + info.order,
+                    get = function()
+                        return tonumber(self.db.global[group][cvar] + (info.startingIndex and 1))
+                    end,
+                    set = function(_, value)
+                        self.db.global[group][cvar] = tostring(value - (info.startingIndex and 1))
+                        self:UpdateSettings()
+                    end,
+                }
+            end
 
             -- Selects
             if info.type == "select" then
