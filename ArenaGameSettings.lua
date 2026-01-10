@@ -608,9 +608,6 @@ function ArenaGameSettings:OnInitialize()
                 graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
                 graphicsGroundClutter = GetCVar("graphicsGroundClutter"),
             },
-
-            -- AddOn Variables
-            copyFrom = nil,
         },
     })
 
@@ -825,10 +822,19 @@ function ArenaGameSettings:SetupOptions()
 
     -- Dropdown menu and button to copy settings between tabs
     local function copySettings(instance, setting)
-        local copyElements = {
+        local copyElements = {}
+        local instanceName = options.args[setting].args[instance].name
+        local copyFrom
+
+        copyElements = {
+            header1 = {
+                type = "header",
+                name = instanceName,
+                order = 1,
+            },
             copySelect = {
-                name = "",
-                desc = "",
+                name = "Copy Settings:",
+                desc = "Copy the settings from another tab.",
                 type = "select",
                 values = function()
                     local pveOptions = self.db.global.addon.pveOptions
@@ -876,25 +882,25 @@ function ArenaGameSettings:SetupOptions()
 
                     return order
                 end,
-                order = 1,
+                order = 2,
                 get = function()
-                    return self.db.global.copyFrom
+                    return copyFrom
                 end,
 
                 set = function(_, value)
-                    self.db.global.copyFrom = value ~= "" and value or nil
+                    copyFrom = value ~= "" and value or nil
                 end,
             },
             copyButton = {
                 type = "execute",
                 name = "Copy Settings",
-                desc = "Copy the settings from another tab.",
-                order = 2,
+                desc = "",
+                order = 3,
                 disabled = function()
-                    return not self.db.global.copyFrom
+                    return not copyFrom
                 end,
                 func = function()
-                    local from = self.db.global.copyFrom
+                    local from = copyFrom
                     local to = instance
 
                     if not from or not self.db.global[from] then return end
@@ -903,7 +909,7 @@ function ArenaGameSettings:SetupOptions()
                         self.db.global[to][cvar] = self.db.global[from][cvar]
                     end
 
-                    self.db.global.copyFrom = nil
+                    copyFrom = nil
                     self:UpdateSettings()
                 end,
             },
@@ -911,7 +917,7 @@ function ArenaGameSettings:SetupOptions()
                 type = "header",
                 name = "",
                 width = "full",
-                order = 3,
+                order = 4,
             },
         }
 
@@ -923,10 +929,10 @@ function ArenaGameSettings:SetupOptions()
         local elements = {}
 
         if header then
-            elements["header1"] = {
+            elements["header2"] = {
                 type = "header",
                 name = string.format("%s Settings", header),
-                order = 4,
+                order = 5,
             }
         end
 
@@ -951,7 +957,7 @@ function ArenaGameSettings:SetupOptions()
                     max = info.max,
                     step = info.step,
                     width = info.width or "",
-                    order = 4 + info.order,
+                    order = 6 + info.order,
                     get = function()
                         return tonumber(self.db.global[instance][cvar])
                     end,
@@ -987,7 +993,7 @@ function ArenaGameSettings:SetupOptions()
                     end,
                     values = info.values,
                     width = info.width or "",
-                    order = 4 + info.order,
+                    order = 6 + info.order,
                     get = function()
                         return self.db.global[instance][cvar]
                     end,
@@ -1016,7 +1022,7 @@ function ArenaGameSettings:SetupOptions()
                         end
                     end,
                     width = info.width or "",
-                    order = 4 + info.order,
+                    order = 6 + info.order,
                     get = function()
                             return self.db.global[instance][cvar] == "1"
                     end,
@@ -1032,16 +1038,19 @@ function ArenaGameSettings:SetupOptions()
     end
 
     -- General Settings
-    options.args.general.args = addOptionElements("general", "general")
+    -- Merge existing elements with elements from addOptionElements()
+    for key, value in pairs(addOptionElements("general", "general")) do
+        options.args.general.args[key] = value
+    end
 
     -- Audio Settings
     for group, _ in pairs(options.args.audio.args) do
-        -- Merge copySettings()
+        -- Merge existing elements with elements from copySettings()
         for key, value in pairs(copySettings(group, "audio")) do
             options.args.audio.args[group].args[key] = value
         end
 
-        -- Merge addOptionElements()
+        -- Merge existing elements with elements from addOptionElements()
         for key, value in pairs(addOptionElements(group, "audio", "Audio")) do
             options.args.audio.args[group].args[key] = value
         end
@@ -1049,12 +1058,12 @@ function ArenaGameSettings:SetupOptions()
 
     -- Graphics Settings
     for group, _ in pairs(options.args.graphics.args) do
-        -- Merge copySettings()
+        -- Merge existing elements with elements from copySettings()
         for key, value in pairs(copySettings(group, "graphics")) do
             options.args.graphics.args[group].args[key] = value
         end
 
-        -- Merge addOptionElements()
+        -- Merge existing elements with elements from addOptionElements()
         for key, value in pairs(addOptionElements(group, "graphics", "Graphics")) do
             options.args.graphics.args[group].args[key] = value
         end
