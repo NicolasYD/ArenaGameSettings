@@ -134,6 +134,22 @@ local cvarTable = {
 
     -- Graphics Settings
     graphics = {
+        graphicsShadowQuality = {
+            name = "Shadow Quality",
+            rec = string.format("Recommended: |cFF00FF00%s|r", "Fair"),
+            desc = "Controls both the method and quality of shadows.",
+            type = "select",
+            values = {
+                ["0"] = "Low",
+                ["1"] = "Fair",
+                ["2"] = "Good",
+                ["3"] = "High",
+                ["4"] = "Ultra",
+                ["5"] = "Ultra High",
+            },
+            width = "full",
+            order = 1,
+        },
         graphicsComputeEffects = {
             name = "Compute Effects",
             rec = string.format("Recommended: |cFF00FF00%s|r", "Disabled"),
@@ -144,10 +160,10 @@ local cvarTable = {
                 ["1"] = "Low",
                 ["2"] = "Good",
                 ["3"] = "High",
-                ["4"] = "Ultra"
+                ["4"] = "Ultra",
             },
             width = "full",
-            order = 1,
+            order = 6,
         },
         graphicsProjectedTextures = {
             name = "Projected Textures",
@@ -159,7 +175,7 @@ local cvarTable = {
                 ["1"] = "Enabled",
             },
             width = "full",
-            order = 2,
+            order = 10,
         },
     },
 }
@@ -314,6 +330,7 @@ function ArenaGameSettings:OnInitialize()
                 Sound_PingVolume = GetCVar("Sound_PingVolume"),
 
                 -- Graphics Settings
+                graphicsShadowQuality = "1",
                 graphicsComputeEffects = "0",
                 graphicsProjectedTextures = "1",
             },
@@ -329,6 +346,7 @@ function ArenaGameSettings:OnInitialize()
                 Sound_PingVolume = GetCVar("Sound_PingVolume"),
 
                 -- Graphics Settings
+                graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
@@ -344,6 +362,7 @@ function ArenaGameSettings:OnInitialize()
                 Sound_PingVolume = GetCVar("Sound_PingVolume"),
 
                 -- Graphics Settings
+                graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
@@ -359,6 +378,7 @@ function ArenaGameSettings:OnInitialize()
                 Sound_PingVolume = GetCVar("Sound_PingVolume"),
 
                 -- Graphics Settings
+                graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
@@ -374,6 +394,7 @@ function ArenaGameSettings:OnInitialize()
                 Sound_PingVolume = GetCVar("Sound_PingVolume"),
 
                 -- Graphics Settings
+                graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
                 graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
                 graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
             },
