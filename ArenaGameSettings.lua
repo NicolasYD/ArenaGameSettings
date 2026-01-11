@@ -62,6 +62,7 @@ local cvarTable = {
             min = 0,
             max = 1,
             step = 0.1,
+            format = "%.1f",
             width = "full",
             order = 1,
         },
@@ -84,6 +85,7 @@ local cvarTable = {
             min = 0,
             max = 1,
             step = 0.1,
+            format = "%.1f",
             width = "full",
             order = 3,
         },
@@ -106,6 +108,7 @@ local cvarTable = {
             min = 0,
             max = 1,
             step = 0.1,
+            format = "%.1f",
             width = "full",
             order = 5,
         },
@@ -127,6 +130,7 @@ local cvarTable = {
             min = 0,
             max = 1,
             step = 0.1,
+            format = "%.1f",
             width = "full",
             order = 7,
         },
@@ -946,12 +950,20 @@ function ArenaGameSettings:SetupOptions()
                     desc = function()
                         local default = GetCVarDefault(cvar)
 
-                        return string.format(
-                            "Default Value: |cFFFF0000%s|r%s\n\n%s",
-                            string.format(info.format or "%s", default),
-                            info.rec and ("\n" .. info.rec) or "",
-                            info.desc or ""
-                        )
+                        if instance == "arena" then
+                            return string.format(
+                                "Default Value: |cFFFF0000%s|r%s\n\n%s",
+                                string.format(info.format or "%s", default + (info.startingIndex == 0 and 1 or 0)),
+                                info.rec and ("\n" .. info.rec) or "",
+                                info.desc or ""
+                            )
+                        else
+                            return string.format(
+                                "Default Value: |cFFFF0000%s|r\n\n%s",
+                                string.format(info.format or "%s", default + (info.startingIndex == 0 and 1 or 0)),
+                                info.desc or ""
+                            )
+                        end
                     end,
                     min = info.min,
                     max = info.max,
@@ -959,10 +971,10 @@ function ArenaGameSettings:SetupOptions()
                     width = info.width or "",
                     order = 6 + info.order,
                     get = function()
-                        return tonumber(self.db.global[instance][cvar])
+                        return tonumber(self.db.global[instance][cvar]) + (info.startingIndex == 0 and 1 or 0)
                     end,
                     set = function(_, value)
-                        self.db.global[instance][cvar] = tostring(value)
+                        self.db.global[instance][cvar] = tostring(value) - (info.startingIndex == 0 and 1 or 0)
                         self:UpdateSettings()
                     end,
                 }
