@@ -432,16 +432,16 @@ function ArenaGameSettings:PLAYER_ENTERING_WORLD()
     self:UpdateSettings()
 end
 
--- Event handler for entering/leaving instances
-function ArenaGameSettings:ZONE_CHANGED_NEW_AREA()
-    self:UpdateSettings()
-end
-
 -- Event handler when a CVar is changed
 function ArenaGameSettings:CVAR_UPDATE(event, cvar, value)
     local settings = self.db.global
     local pveOptions = self.db.global.addon.pveOptions
     local inInstance, instanceType = IsInInstance()
+    local blacklist = {
+        ["AutoPushSpellToActionBar"] = true,
+    }
+
+    if blacklist[cvar] then return end
 
     for category, cvars in pairs(cvarTable) do
         if cvars[cvar] and settings then -- Check if the updated CVar exists in cvarTable to prevent other CVars to be written to the database
@@ -628,14 +628,12 @@ end
 -- Register events
 function ArenaGameSettings:OnEnable()
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
-    self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
     self:RegisterEvent("CVAR_UPDATE")
 end
 
 -- Unregister events
 function ArenaGameSettings:OnDisable()
     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-    self:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
     self:UnregisterEvent("CVAR_UPDATE")
 end
 
