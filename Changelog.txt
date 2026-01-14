@@ -1,3 +1,6 @@
+v11.2.7.14
+- Fixed a bug that resulted in unintended modification of the saved settings in the database.
+
 v11.2.7.13
 - Fixed a bug that kept resetting AutoPushSpellToActionBar.
 

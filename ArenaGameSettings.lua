@@ -333,10 +333,31 @@ local minimapDataObject = LDB:NewDataObject("ArenaGameSettings", {
     end,
 })
 
+-- Save current CVars to DB that are not defined in defaults
+function ArenaGameSettings:SaveCurrentCVar()
+    local settings = self.db.global
+
+    for category, cvars in pairs(cvarTable) do
+        for cvar, info in pairs(cvars) do
+            if category == "general" then
+                if settings and settings.general and settings.general[category] and not settings.general[category][cvar] then
+                    settings.general[category][cvar] = GetCVar(cvar)
+                end
+            else
+                for instanceType, _ in pairs(self.db.global.instanceTypes) do
+                    if settings and settings.instanceTypes and settings.instanceTypes[instanceType] and settings.instanceTypes[instanceType][category] and not settings.instanceTypes[instanceType][category][cvar] then
+                        settings.instanceTypes[instanceType][category][cvar] = GetCVar(cvar)
+                    end
+                end
+            end
+        end
+    end
+end
+
 -- Function to update CVars based on instance type
 function ArenaGameSettings:UpdateSettings()
     local settings = self.db.global
-    local pveOptions = self.db.global.addon.pveOptions
+    local pveOptions = self.db.global.general.addon.pveOptions
     local inInstance, instanceType = IsInInstance()
 
     for category, cvars in pairs(cvarTable) do
@@ -344,15 +365,15 @@ function ArenaGameSettings:UpdateSettings()
             local targetValue
 
             if category == "general" then
-                targetValue = settings and settings.general and settings.general[cvar]
+                targetValue = settings and settings.general and settings.general[category] and settings.general[category][cvar]
             else
                 if pveOptions then
-                    targetValue = settings and settings[instanceType] and settings[instanceType][cvar]
+                    targetValue = settings and settings.instanceTypes and settings.instanceTypes[instanceType] and settings.instanceTypes[instanceType][category] and settings.instanceTypes[instanceType][category][cvar]
                 else
                     if instanceType == "party" or instanceType == "raid" then
-                        targetValue = settings and settings.none and settings.none[cvar]
+                        targetValue = settings and settings.instanceTypes and settings.instanceTypes.none and settings.instanceTypes.none[category] and settings.instanceTypes.none[category][cvar]
                     else
-                        targetValue = settings and settings[instanceType] and settings[instanceType][cvar]
+                        targetValue = settings and settings.instanceTypes and settings.instanceTypes[instanceType] and settings.instanceTypes[instanceType][category] and settings.instanceTypes[instanceType][category][cvar]
                     end
                 end
             end
@@ -372,7 +393,7 @@ end
 
 -- Display the framerate
 function ArenaGameSettings:ShowFramerate()
-    local showFR = self.db.global.general.showFramerate
+    local showFR = self.db.global.general.general.showFramerate
     if showFR and FramerateFrame and FramerateFrame.Show and not FramerateFrame:IsShown() then
         FramerateFrame:Show()
     elseif not showFR and FramerateFrame and FramerateFrame.Hide and FramerateFrame:IsShown() then
@@ -435,26 +456,26 @@ end
 -- Event handler when a CVar is changed
 function ArenaGameSettings:CVAR_UPDATE(event, cvar, value)
     local settings = self.db.global
-    local pveOptions = self.db.global.addon.pveOptions
+    local pveOptions = self.db.global.general.addon.pveOptions
     local inInstance, instanceType = IsInInstance()
     local blacklist = {
         ["AutoPushSpellToActionBar"] = true,
     }
 
-    if blacklist[cvar] then return end
+    if blacklist[cvar] then return end -- Prevents unintended changes to the CVar values in the database
 
     for category, cvars in pairs(cvarTable) do
         if cvars[cvar] and settings then -- Check if the updated CVar exists in cvarTable to prevent other CVars to be written to the database
-            if category == "general" and settings.general then
-                settings.general[cvar] = value
+            if category == "general" and settings.general and settings.general[category] then
+                settings.general[category][cvar] = value
             else
-                if pveOptions and settings[instanceType] then
-                    settings[instanceType][cvar] = value
+                if pveOptions and settings.instanceTypes and settings.instanceTypes[instanceType] and settings.instanceTypes[instanceType][category] then
+                    settings.instanceTypes[instanceType][category][cvar] = value
                 else
-                    if (instanceType == "party" or instanceType == "raid") and settings.none then
-                        settings.none[cvar] = value
-                    elseif settings[instanceType] then
-                        settings[instanceType][cvar] = value
+                    if (instanceType == "party" or instanceType == "raid") and settings.instanceTypes and settings.instanceTypes.none and settings.instanceTypes.none[category] then
+                        settings.instanceTypes.none[category][cvar] = value
+                    elseif settings.instanceTypes and settings.instanceTypes[instanceType] and settings.instanceTypes[instanceType][category] then
+                        settings.instanceTypes[instanceType][category][cvar] = value
                     end
                 end
             end
@@ -466,160 +487,66 @@ function ArenaGameSettings:OnInitialize()
     -- Set up saved variables
     self.db = LibStub("AceDB-3.0"):New("ArenaGameSettingsDB", {
         global = {
-            addon = {
-                -- Addon Settings
-                minimap = {
-                    hide = false,
-                    minimapPos = 15,
-                },
-                pveOptions = false,
-            },
-
             general = {
-                -- General Settings
-                showFramerate = true,
-                AutoPushSpellToActionBar = GetCVar("AutoPushSpellToActionBar"),
-                cameraDistanceMaxZoomFactor = "2.6",
-                SpellQueueWindow = GetCVar("SpellQueueWindow"),
+                addon = {
+                    -- Addon Settings
+                    minimap = {
+                        hide = false,
+                        minimapPos = 15,
+                    },
+                    pveOptions = false,
+                },
+
+                general = {
+                    -- General Settings
+                    showFramerate = false,
+                    cameraDistanceMaxZoomFactor = "2.6",
+                },
             },
 
-            arena = {
-                -- Audio Settings
-                Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
-                Sound_MusicVolume = "0",
-                Sound_SFXVolume = "1",
-                Sound_AmbienceVolume = "0",
-                Sound_DialogVolume = "0",
-                Sound_GameplaySFX = "1",
-                Sound_PingVolume = GetCVar("Sound_PingVolume"),
+            instanceTypes = {
+                arena = {
+                    audio = {
+                        Sound_MusicVolume = "0",
+                        Sound_SFXVolume = "1",
+                        Sound_AmbienceVolume = "0",
+                        Sound_DialogVolume = "0",
+                        Sound_GameplaySFX = "1",
+                    },
+                    graphics = {},
+                },
 
-                -- Graphics Settings
-                graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
-                graphicsLiquidDetail = GetCVar("graphicsLiquidDetail"),
-                graphicsParticleDensity = GetCVar("graphicsParticleDensity"),
-                graphicsSSAO = GetCVar("graphicsSSAO"),
-                graphicsDepthEffects = GetCVar("graphicsDepthEffects"),
-                graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
-                graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
-                graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
-                graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
-                graphicsProjectedTextures = "1",
-                graphicsViewDistance = GetCVar("graphicsViewDistance"),
-                graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
-                graphicsGroundClutter = GetCVar("graphicsGroundClutter"),
-            },
+                pvp = {
+                    audio = {},
+                    graphics = {},
+                },
 
-            pvp = {
-                -- Audio Settings
-                Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
-                Sound_MusicVolume = GetCVar("Sound_MusicVolume"),
-                Sound_SFXVolume = GetCVar("Sound_SFXVolume"),
-                Sound_AmbienceVolume = GetCVar("Sound_AmbienceVolume"),
-                Sound_DialogVolume = GetCVar("Sound_DialogVolume"),
-                Sound_GameplaySFX = GetCVar("Sound_GameplaySFX"),
-                Sound_PingVolume = GetCVar("Sound_PingVolume"),
+                none = {
+                    audio = {},
+                    graphics = {},
+                },
 
-                -- Graphics Settings
-                graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
-                graphicsLiquidDetail = GetCVar("graphicsLiquidDetail"),
-                graphicsParticleDensity = GetCVar("graphicsParticleDensity"),
-                graphicsSSAO = GetCVar("graphicsSSAO"),
-                graphicsDepthEffects = GetCVar("graphicsDepthEffects"),
-                graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
-                graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
-                graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
-                graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
-                graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
-                graphicsViewDistance = GetCVar("graphicsViewDistance"),
-                graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
-                graphicsGroundClutter = GetCVar("graphicsGroundClutter"),
-            },
+                party = {
+                    audio = {},
+                    graphics = {},
+                },
 
-            none = {
-                -- Audio Settings
-                Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
-                Sound_MusicVolume = GetCVar("Sound_MusicVolume"),
-                Sound_SFXVolume = GetCVar("Sound_SFXVolume"),
-                Sound_AmbienceVolume = GetCVar("Sound_AmbienceVolume"),
-                Sound_DialogVolume = GetCVar("Sound_DialogVolume"),
-                Sound_GameplaySFX = GetCVar("Sound_GameplaySFX"),
-                Sound_PingVolume = GetCVar("Sound_PingVolume"),
-
-                -- Graphics Settings
-                graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
-                graphicsLiquidDetail = GetCVar("graphicsLiquidDetail"),
-                graphicsParticleDensity = GetCVar("graphicsParticleDensity"),
-                graphicsSSAO = GetCVar("graphicsSSAO"),
-                graphicsDepthEffects = GetCVar("graphicsDepthEffects"),
-                graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
-                graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
-                graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
-                graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
-                graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
-                graphicsViewDistance = GetCVar("graphicsViewDistance"),
-                graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
-                graphicsGroundClutter = GetCVar("graphicsGroundClutter"),
-            },
-
-            party = {
-                -- Audio Settings
-                Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
-                Sound_MusicVolume = GetCVar("Sound_MusicVolume"),
-                Sound_SFXVolume = GetCVar("Sound_SFXVolume"),
-                Sound_AmbienceVolume = GetCVar("Sound_AmbienceVolume"),
-                Sound_DialogVolume = GetCVar("Sound_DialogVolume"),
-                Sound_GameplaySFX = GetCVar("Sound_GameplaySFX"),
-                Sound_PingVolume = GetCVar("Sound_PingVolume"),
-
-                -- Graphics Settings
-                graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
-                graphicsLiquidDetail = GetCVar("graphicsLiquidDetail"),
-                graphicsParticleDensity = GetCVar("graphicsParticleDensity"),
-                graphicsSSAO = GetCVar("graphicsSSAO"),
-                graphicsDepthEffects = GetCVar("graphicsDepthEffects"),
-                graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
-                graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
-                graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
-                graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
-                graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
-                graphicsViewDistance = GetCVar("graphicsViewDistance"),
-                graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
-                graphicsGroundClutter = GetCVar("graphicsGroundClutter"),
-            },
-
-            raid = {
-                -- Audio Settings
-                Sound_MasterVolume = GetCVar("Sound_MasterVolume"),
-                Sound_MusicVolume = GetCVar("Sound_MusicVolume"),
-                Sound_SFXVolume = GetCVar("Sound_SFXVolume"),
-                Sound_AmbienceVolume = GetCVar("Sound_AmbienceVolume"),
-                Sound_DialogVolume = GetCVar("Sound_DialogVolume"),
-                Sound_GameplaySFX = GetCVar("Sound_GameplaySFX"),
-                Sound_PingVolume = GetCVar("Sound_PingVolume"),
-
-                -- Graphics Settings
-                graphicsShadowQuality = GetCVar("graphicsShadowQuality"),
-                graphicsLiquidDetail = GetCVar("graphicsLiquidDetail"),
-                graphicsParticleDensity = GetCVar("graphicsParticleDensity"),
-                graphicsSSAO = GetCVar("graphicsSSAO"),
-                graphicsDepthEffects = GetCVar("graphicsDepthEffects"),
-                graphicsComputeEffects = GetCVar("graphicsComputeEffects"),
-                graphicsOutlineMode = GetCVar("graphicsOutlineMode"),
-                graphicsTextureResolution = GetCVar("graphicsTextureResolution"),
-                graphicsSpellDensity = GetCVar("graphicsSpellDensity"),
-                graphicsProjectedTextures = GetCVar("graphicsProjectedTextures"),
-                graphicsViewDistance = GetCVar("graphicsViewDistance"),
-                graphicsEnvironmentDetail = GetCVar("graphicsEnvironmentDetail"),
-                graphicsGroundClutter = GetCVar("graphicsGroundClutter"),
+                raid = {
+                    audio = {},
+                    graphics = {},
+                },
             },
         },
     })
+
+    -- Save current CVars to DB that are not defined in defaults
+    self:SaveCurrentCVar()
 
     -- Create options panel
     self:SetupOptions()
 
     -- Minimap button
-    LDBIcon:Register("ArenaGameSettings", minimapDataObject, self.db.global.addon.minimap)
+    LDBIcon:Register("ArenaGameSettings", minimapDataObject, self.db.global.general.addon.minimap)
 
     -- Slash command
     self:RegisterChatCommand("ags", "SlashCommand")
@@ -660,10 +587,10 @@ function ArenaGameSettings:SetupOptions()
                         width = "full",
                         order = 2,
                         get = function()
-                            return not self.db.global.addon.minimap.hide
+                            return not self.db.global.general.addon.minimap.hide
                         end,
                         set = function(_, value)
-                            self.db.global.addon.minimap.hide = not value
+                            self.db.global.general.addon.minimap.hide = not value
                             if value then
                                 LDBIcon:Show("ArenaGameSettings")
                             else
@@ -678,10 +605,10 @@ function ArenaGameSettings:SetupOptions()
                         width = "full",
                         order = 3,
                         get = function()
-                            return self.db.global.addon.pveOptions
+                            return self.db.global.general.addon.pveOptions
                         end,
                         set = function(_, value)
-                            self.db.global.addon.pveOptions = value
+                            self.db.global.general.addon.pveOptions = value
                             ArenaGameSettings:UpdateSettings()
                         end,
                     },
@@ -722,10 +649,10 @@ function ArenaGameSettings:SetupOptions()
                         desc = "Show the framerate all the time.",
                         order = 2,
                         get = function()
-                            return self.db.global.general.showFramerate
+                            return self.db.global.general.general.showFramerate
                         end,
                         set = function(_, value)
-                            self.db.global.general.showFramerate = value
+                            self.db.global.general.general.showFramerate = value
                             self:ShowFramerate()
                         end,
                     },
@@ -760,7 +687,7 @@ function ArenaGameSettings:SetupOptions()
                         name = "Dungeon",
                         order = 4,
                         hidden = function()
-                            return not self.db.global.addon.pveOptions
+                            return not self.db.global.general.addon.pveOptions
                         end,
                         args = {},
                     },
@@ -769,7 +696,7 @@ function ArenaGameSettings:SetupOptions()
                         name = "Raid",
                         order = 5,
                         hidden = function()
-                            return not self.db.global.addon.pveOptions
+                            return not self.db.global.general.addon.pveOptions
                         end,
                         args = {},
                     },
@@ -804,7 +731,7 @@ function ArenaGameSettings:SetupOptions()
                         name = "Dungeon",
                         order = 4,
                         hidden = function()
-                            return not self.db.global.addon.pveOptions
+                            return not self.db.global.general.addon.pveOptions
                         end,
                         args = {},
                     },
@@ -813,7 +740,7 @@ function ArenaGameSettings:SetupOptions()
                         name = "Raid",
                         order = 5,
                         hidden = function()
-                            return not self.db.global.addon.pveOptions
+                            return not self.db.global.general.addon.pveOptions
                         end,
                         args = {},
                     },
@@ -823,9 +750,9 @@ function ArenaGameSettings:SetupOptions()
     }
 
     -- Dropdown menu and button to copy settings between tabs
-    local function copySettings(instance, setting)
+    local function copySettings(instanceType, setting)
         local copyElements = {}
-        local instanceName = options.args[setting].args[instance].name
+        local instanceName = options.args[setting].args[instanceType].name
         local copyFrom
 
         copyElements = {
@@ -839,34 +766,34 @@ function ArenaGameSettings:SetupOptions()
                 desc = "Copy the settings from another tab.",
                 type = "select",
                 values = function()
-                    local pveOptions = self.db.global.addon.pveOptions
+                    local pveOptions = self.db.global.general.addon.pveOptions
                     local t = {}
 
                     t[""] = "<Clear Selection>"
 
                     for groupKey, groupInfo in pairs(options.args[setting].args) do
-                        if groupInfo.type == "group" and groupKey ~= instance and pveOptions then
+                        if groupInfo.type == "group" and groupKey ~= instanceType and pveOptions then
                             t[groupKey] = groupInfo.name
-                        elseif groupInfo.type == "group" and groupKey ~= instance and not pveOptions and groupKey ~= "party" and groupKey ~= "raid" then
+                        elseif groupInfo.type == "group" and groupKey ~= instanceType and not pveOptions and groupKey ~= "party" and groupKey ~= "raid" then
                             t[groupKey] = groupInfo.name
                         end
                     end
                     return t
                 end,
                 sorting = function()
-                    local pveOptions = self.db.global.addon.pveOptions
+                    local pveOptions = self.db.global.general.addon.pveOptions
                     local tmp = {}
                     local order = {}
 
                     order[1] = ""
 
                     for groupKey, groupInfo in pairs(options.args[setting].args) do
-                        if groupInfo.type == "group" and groupKey ~= instance and pveOptions then
+                        if groupInfo.type == "group" and groupKey ~= instanceType and pveOptions then
                             table.insert(tmp, {
                                 key = groupKey,
                                 order = groupInfo.order or 0
                             })
-                        elseif groupInfo.type == "group" and groupKey ~= instance and not pveOptions and groupKey ~= "party" and groupKey ~= "raid" then
+                        elseif groupInfo.type == "group" and groupKey ~= instanceType and not pveOptions and groupKey ~= "party" and groupKey ~= "raid" then
                             table.insert(tmp, {
                                 key = groupKey,
                                 order = groupInfo.order or 0
@@ -903,12 +830,12 @@ function ArenaGameSettings:SetupOptions()
                 end,
                 func = function()
                     local from = copyFrom
-                    local to = instance
+                    local to = instanceType
 
-                    if not from or not self.db.global[from] then return end
+                    if not from or not self.db.global.instanceTypes[from] then return end
 
                     for cvar in pairs(cvarTable[setting]) do
-                        self.db.global[to][cvar] = self.db.global[from][cvar]
+                        self.db.global.instanceTypes[to][setting][cvar] = self.db.global.instanceTypes[from][setting][cvar]
                     end
 
                     copyFrom = nil
@@ -927,7 +854,7 @@ function ArenaGameSettings:SetupOptions()
     end
 
     -- GUI items to modify the settings
-    local function addOptionElements(instance, setting, header)
+    local function addOptionElements(instanceType, setting, header)
         local elements = {}
 
         if header then
@@ -948,7 +875,7 @@ function ArenaGameSettings:SetupOptions()
                     desc = function()
                         local default = GetCVarDefault(cvar)
 
-                        if instance == "arena" then
+                        if instanceType == "arena" then
                             return string.format(
                                 "Default Value: |cFFFF0000%s|r%s\n\n%s",
                                 string.format(info.format or "%s", default + (info.startingIndex == 0 and 1 or 0)),
@@ -969,10 +896,18 @@ function ArenaGameSettings:SetupOptions()
                     width = info.width or "",
                     order = 6 + info.order,
                     get = function()
-                        return tonumber(self.db.global[instance][cvar]) + (info.startingIndex == 0 and 1 or 0)
+                        if instanceType then
+                            return tonumber(self.db.global.instanceTypes[instanceType][setting][cvar]) + (info.startingIndex == 0 and 1 or 0)
+                        else
+                            return tonumber(self.db.global.general[setting][cvar]) + (info.startingIndex == 0 and 1 or 0)
+                        end
                     end,
                     set = function(_, value)
-                        self.db.global[instance][cvar] = tostring(value) - (info.startingIndex == 0 and 1 or 0)
+                        if instanceType then
+                            self.db.global.instanceTypes[instanceType][setting][cvar] = tostring(value) - (info.startingIndex == 0 and 1 or 0)
+                        else
+                            self.db.global.general[setting][cvar] = tostring(value) - (info.startingIndex == 0 and 1 or 0)
+                        end
                         self:UpdateSettings()
                     end,
                 }
@@ -986,7 +921,7 @@ function ArenaGameSettings:SetupOptions()
                     desc = function ()
                         local default_value = GetCVarDefault(cvar)
                         local default_text = info.values[default_value]
-                        if instance == "arena" then
+                        if instanceType == "arena" then
                             return string.format(
                                 "Default: |cFFFF0000%s|r%s\n\n%s",
                                 default_text,
@@ -1005,10 +940,18 @@ function ArenaGameSettings:SetupOptions()
                     width = info.width or "",
                     order = 6 + info.order,
                     get = function()
-                        return self.db.global[instance][cvar]
+                        if instanceType then
+                            return self.db.global.instanceTypes[instanceType][setting][cvar]
+                        else
+                            return self.db.global.general[setting][cvar]
+                        end
                     end,
                     set = function(_, value)
-                        self.db.global[instance][cvar] = value
+                        if instanceType then
+                            self.db.global.instanceTypes[instanceType][setting][cvar] = value
+                        else
+                            self.db.global.general[setting][cvar] = value
+                        end
                         self:UpdateSettings()
                     end,
                 }
@@ -1034,10 +977,18 @@ function ArenaGameSettings:SetupOptions()
                     width = info.width or "",
                     order = 6 + info.order,
                     get = function()
-                            return self.db.global[instance][cvar] == "1"
+                        if instanceType then
+                            return self.db.global.instanceTypes[instanceType][setting][cvar] == "1"
+                        else
+                            return self.db.global.general[setting][cvar] == "1"
+                        end
                     end,
                     set = function(_, value)
-                        self.db.global[instance][cvar] = value and "1" or "0"
+                        if instanceType then
+                            self.db.global.instanceTypes[instanceType][setting][cvar] = value and "1" or "0"
+                        else
+                            self.db.global.general[setting][cvar] = value and "1" or "0"
+                        end
                         self:UpdateSettings()
                     end,
                 }
@@ -1049,7 +1000,7 @@ function ArenaGameSettings:SetupOptions()
 
     -- General Settings
     -- Merge existing elements with elements from addOptionElements()
-    for key, value in pairs(addOptionElements("general", "general")) do
+    for key, value in pairs(addOptionElements(nil, "general", nil)) do
         options.args.general.args[key] = value
     end
 
