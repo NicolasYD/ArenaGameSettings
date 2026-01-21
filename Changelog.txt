@@ -1,3 +1,6 @@
+v12.0.0.1
+- Updated interface version in .toc file.
+
 v11.2.7.14
 - Fixed a bug that resulted in unintended modification of the saved settings in the database.
 
