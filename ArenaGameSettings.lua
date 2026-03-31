@@ -456,7 +456,6 @@ end
 -- Event handler when a CVar is changed
 function ArenaGameSettings:CVAR_UPDATE(event, cvar, value)
     local settings = self.db.global
-    local pveOptions = self.db.global.general.addon.pveOptions
     local inInstance, instanceType = IsInInstance()
     local blacklist = {
         ["AutoPushSpellToActionBar"] = true,
@@ -469,6 +468,8 @@ function ArenaGameSettings:CVAR_UPDATE(event, cvar, value)
             if category == "general" and settings.general and settings.general[category] then
                 settings.general[category][cvar] = value
             else
+                local pveOptions = self.db.global.general.addon.pveOptions
+
                 if pveOptions and settings.instanceTypes and settings.instanceTypes[instanceType] and settings.instanceTypes[instanceType][category] then
                     settings.instanceTypes[instanceType][category][cvar] = value
                 else
