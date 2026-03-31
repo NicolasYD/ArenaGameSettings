@@ -51,6 +51,41 @@ local cvarTable = {
             width = "full",
             order = 3,
         },
+        SoftTargetEnemy = {
+            name = "Soft Target Enemy",
+            rec = string.format("Recommended Value: |cFF00FF00%s|r", "0"),
+            desc = "Sets when enemy soft targeting should be enabled.\n\n0 = Off\n1 = Gamepad\n2 = Keyboard and Mouse\n3 = Always",
+            type = "range",
+            min = 0,
+            max = 3,
+            step = 1,
+            format = "%1.f",
+            width = "full",
+            order = 4,
+        },
+        SoftTargetEnemyArc = {
+            name = "Soft Target Enemy Arc",
+            rec = string.format("Recommended Value: |cFF00FF00%s|r", "0"),
+            desc = "Sets the arc allowance for enemy soft targeting.\n\n0 = No yaw arc allowance, must be directly in front.\n1 = Must be in front yaw arc.\n2 = Can be anywhere in tab targeting area.",
+            type = "range",
+            min = 0,
+            max = 2,
+            step = 1,
+            format = "%1.f",
+            width = "full",
+            order = 5,
+        },
+        SoftTargetEnemyRange = {
+            name = "Soft Target Enemy Range",
+            rec = string.format("Recommended Value: |cFF00FF00%s|r", "0"),
+            desc = "Max range to soft target enemies (limited to tab targeting range).",
+            type = "range",
+            min = 0,
+            max = tonumber(GetCVarDefault("SoftTargetEnemyRange")),
+            step = 1,
+            width = "full",
+            order = 6,
+        },
     },
 
     -- Audio Settings
@@ -502,6 +537,9 @@ function ArenaGameSettings:OnInitialize()
                     -- General Settings
                     showFramerate = false,
                     cameraDistanceMaxZoomFactor = "2.6",
+                    SoftTargetEnemy = "0",
+                    SoftTargetEnemyArc = "0",
+                    SoftTargetEnemyRange = "0",
                 },
             },
 
@@ -876,7 +914,7 @@ function ArenaGameSettings:SetupOptions()
                     desc = function()
                         local default = GetCVarDefault(cvar)
 
-                        if instanceType == "arena" then
+                        if instanceType == nil or instanceType == "arena" then
                             return string.format(
                                 "Default Value: |cFFFF0000%s|r%s\n\n%s",
                                 string.format(info.format or "%s", default + (info.startingIndex == 0 and 1 or 0)),
@@ -922,7 +960,7 @@ function ArenaGameSettings:SetupOptions()
                     desc = function ()
                         local default_value = GetCVarDefault(cvar)
                         local default_text = info.values[default_value]
-                        if instanceType == "arena" then
+                        if instanceType == nil or instanceType == "arena" then
                             return string.format(
                                 "Default: |cFFFF0000%s|r%s\n\n%s",
                                 default_text,
