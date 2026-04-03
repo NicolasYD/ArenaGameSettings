@@ -1,4 +1,4 @@
-## Interface: 120000
+## Interface: 120001
 ## Title: Arena Game Settings
 ## Category: Game Settings
 ## IconTexture: Interface\Icons\Achievement_Featsofstrength_Gladiator_08

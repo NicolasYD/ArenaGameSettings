@@ -1,4 +1,4 @@
-v12.0.1.1 (not released yet)
+v12.0.1.1
 - Fixed bug that caused a lua error on reload.
 - Fixed bug where recommended values would not show in the general tab.
 - Added SoftTargetEnemy, SoftTargetEnemyArc, SoftTargetEnemyRange to general settings to hopefully fix arena123 macros from targeting the wrong target.
